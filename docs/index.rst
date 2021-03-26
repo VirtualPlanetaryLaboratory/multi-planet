@@ -10,5 +10,6 @@ Welcome to Multi-Planet's documentation!
    :maxdepth: 1
 
    install
-   Help
+   help
+   mpstatus
    GitHub <https://github.com/VirtualPlanetaryLaboratory/multi-planet>
