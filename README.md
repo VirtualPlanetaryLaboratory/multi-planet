@@ -1,3 +1,10 @@
+
+
+
+<p align="center">
+  <a href="https://VirtualPlanetaryLaboratory.github.io/multi-planet/"><img src="https://img.shields.io/badge/read-the_docs-blue.svg?style=flat"></a>
+</p>
+
 # Multi-Planet: Multi-Core Simulations with VPLanet
 
 Use `multi-planet` to run a large number of simulations, created with [vspace](../vspace>), on one or more cores.  The included script `mpstatus` can provide the current status of the simulations. Note that `multi-planet` cannot be used to run simulations across multiple computers.
