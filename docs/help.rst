@@ -17,7 +17,7 @@ There are three optional arguments for multi-planet:
 
  :code:`-bp`: `bigplanet`_ will be ran in conjunction with multi-planet.
 
- .. _bigplanet: <https://github.com/VirtualPlanetaryLaboratory/bigplanet>_
+ .. _bigplanet: https://github.com/VirtualPlanetaryLaboratory/bigplanet
 
  :code:`-m`: emails the users at :code:`email` when the simulations are complete
 
