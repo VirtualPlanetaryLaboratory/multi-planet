@@ -6,8 +6,7 @@ import mmap
 import argparse
 import h5py
 import numpy as np
-from bigplanet import CreateHDF5,merge_data,load,save,CreateMasterHDF5
-from collections import OrderedDict
+from bigplanet import CreateHDF5Group, GetSNames, GetSims
 
 # --------------------------------------------------------------------
 
@@ -16,7 +15,7 @@ def parallel_run_planet(input_file, cores, quiet, bigplanet,email):
     # gets the folder name with all the sims
     folder_name, infiles = GetDir(input_file)
     #gets the list of sims
-    sims = sorted([f.path for f in os.scandir(folder_name) if f.is_dir()])
+    sims = GetSims(folder_name)
 
     #initalizes the checkpoint file
     checkpoint_file = os.getcwd() + '/' + '.' + folder_name
@@ -30,30 +29,27 @@ def parallel_run_planet(input_file, cores, quiet, bigplanet,email):
     else:
         ReCreateCP(checkpoint_file,input_file,quiet,sims)
 
-    #get logfile name
-    path_vpl = os.path.join(sims[0],'vpl.in')
-    with open(path_vpl, 'r') as vpl:
-        content = [line.strip().split() for line in vpl.readlines()]
-
-        for line in content:
-            if line:
-                if line[0] == 'sSystemName':
-                    system_name = line[1]
-
+    # Get the SNames (sName and sSystemName) for the simuations
+    # Save the name of the log file
+    system_name, body_list = GetSNames(infiles, sims)
     logfile = system_name + ".log"
+
 
     lock = mp.Lock()
     workers = []
-    for i in range(cores):
-        workers.append(mp.Process(target=par_worker, args=(checkpoint_file,infiles,system_name,logfile,quiet,bigplanet,lock)))
-    for w in workers:
-        w.start()
-    for w in workers:
-        w.join()
 
-    if bigplanet == True:
-        CreateMasterHDF5(folder_name,sims)
+    master_hdf5_file = folder_name + '.bpl'
+    with h5py.File(master_hdf5_file, 'w') as Master:
+        for i in range(cores):
+            workers.append(mp.Process(target=par_worker,
+                           args=(checkpoint_file, system_name, body_list, logfile, infiles, quiet, lock, bigplanet, Master)))
+        for w in workers:
+            w.start()
+        for w in workers:
+            w.join()
 
+    if bigplanet == False:
+        sub.run(['rm', master_hdf5_file])
     if email is not None:
         SendMail(email, folder_name)
 
@@ -115,13 +111,14 @@ def ReCreateCP(checkpoint_file,input_file,quiet,sims):
             f.writelines(' '.join(newline)+'\n')
 
 ## parallel worker to run vplanet ##
-def par_worker(checkpoint_file,infiles,system_name,logfile,quiet,bigplanet,lock):
+def par_worker(checkpoint_file,system_name, body_list, log_file, in_files, quiet, lock,bigplanet, h5_file):
 
     while True:
 
         lock.acquire()
         datalist = []
-        data = {}
+        if bigplanet == True:
+            data = {}
 
         with open(checkpoint_file, 'r') as f:
             for newline in f:
@@ -172,10 +169,9 @@ def par_worker(checkpoint_file,infiles,system_name,logfile,quiet,bigplanet,lock)
             if quiet == False:
                 print(folder, "completed")
             if bigplanet == True:
-                single_folder = folder.split('/')[-1]
-                HDF5_File = single_folder + '.hdf5'
-                data = {}
-                CreateHDF5(data, system_name, infiles, logfile, quiet, HDF5_File)
+                group_name = folder.split('/')[-1]
+                if group_name not in h5_file:
+                    CreateHDF5Group(data, system_name, body_list, log_file, group_name,in_files, h5_file)
         else:
             for l in datalist:
                 if l[0] == folder:
