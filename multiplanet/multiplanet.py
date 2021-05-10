@@ -189,10 +189,7 @@ def par_worker(checkpoint_file,system_name, body_list, log_file, in_files, quiet
 
         os.chdir("../../")
 
-
-
-if __name__ == "__main__":
-
+def Arguments():
     max_cores = mp.cpu_count()
     parser = argparse.ArgumentParser(description="Using multi-processing to run a large number of simulations")
     parser.add_argument("-c","--cores", type=int, default=max_cores, help="The total number of processors used")
@@ -211,3 +208,6 @@ if __name__ == "__main__":
         raise Exception("Unable to call VPLANET. Is it in your PATH?")
 
     parallel_run_planet(args.InputFile,args.cores,args.quiet,args.bigplanet,args.email)
+
+if __name__ == "__main__":
+    Arguments()
