@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 # -*- coding: utf-8 -*-
 
-python $(dirname $0)/../multi-planet.py $@
+python $(dirname $0)/../multiplanet/multiplanet.py $@
