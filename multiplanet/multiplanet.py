@@ -42,7 +42,7 @@ def parallel_run_planet(input_file, cores, quiet, bigplanet,email):
     with h5py.File(master_hdf5_file, 'w') as Master:
         for i in range(cores):
             workers.append(mp.Process(target=par_worker,
-                           args=(checkpoint_file, system_name, body_list, logfile, infiles, quiet, lock, bigplanet, Master)))
+                           args=(checkpoint_file, system_name, body_list, logfile, infiles, quiet, lock, bigplanet, master_hdf5_file)))
         for w in workers:
             w.start()
         for w in workers:
@@ -169,8 +169,9 @@ def par_worker(checkpoint_file,system_name, body_list, log_file, in_files, quiet
             if quiet == False:
                 print(folder, "completed")
             if bigplanet == True:
+                with h5py.File(h5_file, 'w') as Master:
                 group_name = folder.split('/')[-1]
-                if group_name not in h5_file:
+                if group_name not in Master:
                     CreateHDF5Group(data, system_name, body_list, log_file, group_name,in_files, h5_file)
         else:
             for l in datalist:
