@@ -19,7 +19,14 @@ setup(
         "write_to": os.path.join("multiplanet", "multiplanet_version.py"),
         "write_to_template": '__version__ = "{version}"\n',
     },
-    install_requires=["numpy", "h5py", "argparse", "pandas", "scipy"],
+    install_requires=[
+        "numpy",
+        "h5py",
+        "argparse",
+        "pandas",
+        "scipy",
+        "bigplanet",
+    ],
     entry_points={
         "console_scripts": [
             "multi-planet = multiplanet.multiplanet:Arguments",
