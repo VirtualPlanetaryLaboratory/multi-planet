@@ -33,6 +33,19 @@ MANIFEST
 *.manifest
 *.spec
 
+
+#Tests
+tests/Checkpoint/MP_Checkpoint/
+tests/Checkpoint/.*
+tests/MpStatus/MP_Status/
+tests/MpStatus/.*
+tests/Parallel/MP_Parallel/
+tests/Parallel/.*
+tests/Serial/MP_Serial/
+tests/Serial/.*
+
+
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt

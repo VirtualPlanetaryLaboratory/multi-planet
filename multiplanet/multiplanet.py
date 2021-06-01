@@ -170,9 +170,9 @@ def par_worker(checkpoint_file,system_name, body_list, log_file, in_files, quiet
                 print(folder, "completed")
             if bigplanet == True:
                 with h5py.File(h5_file, 'w') as Master:
-                group_name = folder.split('/')[-1]
-                if group_name not in Master:
-                    CreateHDF5Group(data, system_name, body_list, log_file, group_name,in_files, h5_file)
+                    group_name = folder.split('/')[-1]
+                    if group_name not in Master:
+                        CreateHDF5Group(data, system_name, body_list, log_file, group_name,in_files, h5_file)
         else:
             for l in datalist:
                 if l[0] == folder:

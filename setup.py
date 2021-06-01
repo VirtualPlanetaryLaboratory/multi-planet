@@ -69,7 +69,7 @@ setup(
     entry_points={
         "console_scripts": [
             "multi-planet = multiplanet.multiplanet:Arguments",
-            "mpstatus = multiplanet.mpstatus:main",
+            "mpstatus = multiplanet.mpstatus:Arguments",
         ],
     },
     install_requires=["numpy", "h5py", "argparse", "pandas", "scipy"],

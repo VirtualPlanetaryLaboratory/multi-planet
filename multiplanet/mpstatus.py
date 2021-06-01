@@ -1,5 +1,6 @@
 import os
 import sys
+import argparse
 
 def mpstatus(input_file):
 
@@ -34,5 +35,9 @@ def mpstatus(input_file):
         print('Number of Simulations in progress: '+ str(count_ip))
         print('Number of Simulations remaining: ' + str(count_todo))
 
+def Arguments():
+    parser = argparse.ArgumentParser(description="Checking the staus a multiplanet run")
+    parser.add_argument("InputFile", help="name of the vspace file")
+    args = parser.parse_args()
 
-mpstatus(sys.argv[1])
+    mpstatus(args.InputFile)
