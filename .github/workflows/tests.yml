@@ -51,7 +51,7 @@ jobs:
       - name: Run tests
         if: steps.install.outcome == 'success'
         shell: bash -l {0}
-        run: python -m pytest -v tests --junitxml=junit/test-results.xml
+        run: python -m pytest -v tests --junitxml=junit/test-results.xml --cov=multiplanet/ --cov-report=xml
 
       - name: Get unique id
         id: unique-id
@@ -70,9 +70,8 @@ jobs:
 
       - name: CodeCov
         uses: codecov/codecov-action@v1.5.0
-        if: steps.install.outcome == 'success'
         with:
-          files: junit/tests-*.xml
+          files: ./coverage.xml
         #shell: bash -l {0}
         #run: |
         #  bash <(curl -s https://codecov.io/bash)
