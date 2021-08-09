@@ -117,20 +117,25 @@ def CreateCP(checkpoint_file, input_file, quiet, sims):
 def ReCreateCP(checkpoint_file, input_file, quiet, sims):
     if quiet == False:
         print("WARNING: multi-planet checkpoint file already exists!")
-        print("Checking if checkpoint file is corrupt...")
 
     datalist = []
-
-    with open(checkpoint_file, "r") as f:
-        for newline in f:
+    with open(checkpoint_file, "r") as re:
+        for newline in re:
             datalist.append(newline.strip().split())
-            for l in datalist:
-                if l[1] == "0":
-                    l[1] = "-1"
 
-    with open(checkpoint_file, "w") as f:
+        for l in datalist:
+            if l[1] == "0":
+                l[1] = "-1"
+        if datalist[-1] != ["THE","END"]:
+            lest = datalist[-2][0]
+            idx = sims.index(lest)
+            for f in range(idx+2,len(sims)):
+                datalist.append([sims[f],'-1'])
+            datalist.append(["THE","END"])
+
+    with open(checkpoint_file, "w") as wr:
         for newline in datalist:
-            f.writelines(" ".join(newline) + "\n")
+            wr.writelines(" ".join(newline) + "\n")
 
 
 ## parallel worker to run vplanet ##

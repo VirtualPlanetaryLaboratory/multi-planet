@@ -14,3 +14,5 @@ __author__ = "Caitlyn Wilhelm (cwilhelm@uw.edu)"
 __copyright__ = "Copyright 2020  Caitlyn Wilhelm"
 
 from .multiplanet import *
+
+from .multiplanet_module import *
