@@ -23,7 +23,7 @@ def test_mp_checkpoint():
 
         # Run multi-planet
         if not (path / ".MP_Checkpoint").exists():
-            subprocess.check_output(["multi-planet", "vspace.in"], cwd=path)
+            subprocess.check_output(["multiplanet", "vspace.in"], cwd=path)
         #gets list of folders
         folders = sorted([f.path for f in os.scandir(path / "MP_Checkpoint") if f.is_dir()])
 

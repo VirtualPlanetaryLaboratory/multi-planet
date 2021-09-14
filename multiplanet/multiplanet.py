@@ -6,7 +6,7 @@ import mmap
 import argparse
 import h5py
 import numpy as np
-from bigplanet import CreateHDF5Group, GetSNames, GetSims
+from .bp_get import *
 
 # --------------------------------------------------------------------
 
@@ -62,7 +62,8 @@ def parallel_run_planet(input_file, cores, quiet, bigplanet, email):
             w.join()
 
     if bigplanet == False:
-        sub.run(["rm", master_hdf5_file])
+        if  os.path.isfile(master_hdf5_file) == True:
+            sub.run(["rm", master_hdf5_file])
     if email is not None:
         SendMail(email, folder_name)
 
@@ -117,20 +118,25 @@ def CreateCP(checkpoint_file, input_file, quiet, sims):
 def ReCreateCP(checkpoint_file, input_file, quiet, sims):
     if quiet == False:
         print("WARNING: multi-planet checkpoint file already exists!")
-        print("Checking if checkpoint file is corrupt...")
 
     datalist = []
-
-    with open(checkpoint_file, "r") as f:
-        for newline in f:
+    with open(checkpoint_file, "r") as re:
+        for newline in re:
             datalist.append(newline.strip().split())
-            for l in datalist:
-                if l[1] == "0":
-                    l[1] = "-1"
 
-    with open(checkpoint_file, "w") as f:
+        for l in datalist:
+            if l[1] == "0":
+                l[1] = "-1"
+        if datalist[-1] != ["THE","END"]:
+            lest = datalist[-2][0]
+            idx = sims.index(lest)
+            for f in range(idx+2,len(sims)):
+                datalist.append([sims[f],'-1'])
+            datalist.append(["THE","END"])
+
+    with open(checkpoint_file, "w") as wr:
         for newline in datalist:
-            f.writelines(" ".join(newline) + "\n")
+            wr.writelines(" ".join(newline) + "\n")
 
 
 ## parallel worker to run vplanet ##
@@ -207,19 +213,19 @@ def par_worker(
                     break
             if quiet == False:
                 print(folder, "completed")
-            if bigplanet == True:
-                with h5py.File(h5_file, "w") as Master:
-                    group_name = folder.split("/")[-1]
-                    if group_name not in Master:
-                        CreateHDF5Group(
-                            data,
-                            system_name,
-                            body_list,
-                            log_file,
-                            group_name,
-                            in_files,
-                            h5_file,
-                        )
+            # if bigplanet == True:
+            #     with h5py.File(h5_file, "w") as Master:
+            #         group_name = folder.split("/")[-1]
+            #         if group_name not in Master:
+            #             CreateHDF5Group(
+            #                 data,
+            #                 system_name,
+            #                 body_list,
+            #                 log_file,
+            #                 group_name,
+            #                 in_files,
+            #                 h5_file,
+            #             )
         else:
             for l in datalist:
                 if l[0] == folder:
@@ -259,7 +265,7 @@ def Arguments():
         "-bp",
         "--bigplanet",
         action="store_true",
-        help="Runs bigplanet and creates the HDF5 files alongside running mutlt-planet",
+        help="Runs bigplanet and creates the Bigplanet Archive file alongside running multiplanet",
     )
     parser.add_argument(
         "-m",
