@@ -22,7 +22,7 @@ def test_mpstatus():
 
         # Run multi-planet
         if not (path / ".MP_Status").exists():
-            subprocess.check_output(["multi-planet", "vspace.in"], cwd=path)
+            subprocess.check_output(["multiplanet", "vspace.in"], cwd=path)
             subprocess.check_output(["mpstatus", "vspace.in"], cwd=path)
 
         #gets list of folders

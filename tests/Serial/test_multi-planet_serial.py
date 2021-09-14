@@ -15,7 +15,7 @@ def test_mp_serial():
 
     # Run multi-planet
     if not (path / ".MP_Serial").exists():
-        subprocess.check_output(["multi-planet", "vspace.in", "-c", "1"], cwd=path)
+        subprocess.check_output(["multiplanet", "vspace.in", "-c", "1"], cwd=path)
 
     folders = sorted([f.path for f in os.scandir(path / "MP_Serial") if f.is_dir()])
 

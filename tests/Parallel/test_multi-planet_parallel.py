@@ -22,7 +22,7 @@ def test_mp_parallel():
 
         # Run multi-planet
         if not (path / ".MP_Parallel").exists():
-            subprocess.check_output(["multi-planet", "vspace.in"], cwd=path)
+            subprocess.check_output(["multiplanet", "vspace.in"], cwd=path)
 
         folders = sorted([f.path for f in os.scandir(path / "MP_Parallel") if f.is_dir()])
 

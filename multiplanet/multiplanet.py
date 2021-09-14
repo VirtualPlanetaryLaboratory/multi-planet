@@ -6,7 +6,7 @@ import mmap
 import argparse
 import h5py
 import numpy as np
-from bigplanet import CreateHDF5Group, GetSNames, GetSims
+from .bp_get import *
 
 # --------------------------------------------------------------------
 
@@ -213,19 +213,19 @@ def par_worker(
                     break
             if quiet == False:
                 print(folder, "completed")
-            if bigplanet == True:
-                with h5py.File(h5_file, "w") as Master:
-                    group_name = folder.split("/")[-1]
-                    if group_name not in Master:
-                        CreateHDF5Group(
-                            data,
-                            system_name,
-                            body_list,
-                            log_file,
-                            group_name,
-                            in_files,
-                            h5_file,
-                        )
+            # if bigplanet == True:
+            #     with h5py.File(h5_file, "w") as Master:
+            #         group_name = folder.split("/")[-1]
+            #         if group_name not in Master:
+            #             CreateHDF5Group(
+            #                 data,
+            #                 system_name,
+            #                 body_list,
+            #                 log_file,
+            #                 group_name,
+            #                 in_files,
+            #                 h5_file,
+            #             )
         else:
             for l in datalist:
                 if l[0] == folder:
@@ -265,7 +265,7 @@ def Arguments():
         "-bp",
         "--bigplanet",
         action="store_true",
-        help="Runs bigplanet and creates the HDF5 files alongside running mutlt-planet",
+        help="Runs bigplanet and creates the Bigplanet Archive file alongside running multiplanet",
     )
     parser.add_argument(
         "-m",
