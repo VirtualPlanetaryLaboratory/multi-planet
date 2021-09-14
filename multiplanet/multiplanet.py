@@ -62,7 +62,7 @@ def parallel_run_planet(input_file, cores, quiet, bigplanet, email):
             w.join()
 
     if bigplanet == False:
-        if os.isfile(master_hdf5_file) == True:
+        if  os.path.isfile(master_hdf5_file) == True:
             sub.run(["rm", master_hdf5_file])
     if email is not None:
         SendMail(email, folder_name)
