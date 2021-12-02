@@ -20,8 +20,8 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 
 project = 'Multi-Planet'
-copyright = '2021, Caitlyn Wilhelm'
-author = 'Caitlyn Wilhelm'
+copyright = '2021, The VPLanet Team'
+author = 'Caitlyn Wilhelm, Rory Barnes'
 
 # The full version, including alpha/beta/rc tags
 release = '1.0'
