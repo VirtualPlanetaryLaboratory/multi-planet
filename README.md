@@ -3,7 +3,7 @@
   <img width = "250" src="docs/VPLanetLogo.png?raw=true"/>
 </p>
 
-<h1 align="center">MultiPlanet: Multi-core simulations with VPLanet</h1>
+<h1 align="center">multi-planet: Multi-core simulations of VPLanet</h1>
 
 <p align="center">
   <a href="https://VirtualPlanetaryLaboratory.github.io/multi-planet/"><img src="https://img.shields.io/badge/read-the_docs-blue.svg?style=flat"></a>
@@ -14,4 +14,4 @@
   </a>
 </p>
 
-Use `multiplanet` to run a large number of simulations, created with [vspace](https://github.com/VirtualPlanetaryLaboratory/vspace), on one or more cores.  The included script `mpstatus` can provide the current status of the simulations. Note that `multiplanet` cannot be used to run simulations across multiple computers.
+Use `multi-planet` to run a large number of simulations, created with [vspace](https://github.com/VirtualPlanetaryLaboratory/vspace), on one or more cores.  The included script `mpstatus` can provide the current status of the simulations. Note that `multi-planet` cannot be used to run simulations across multiple computers.

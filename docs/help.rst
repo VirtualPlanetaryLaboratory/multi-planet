@@ -1,4 +1,4 @@
-Running Multi-Planet
+Running multi-planet
 ====================
 
 To run :code:`multi-planet` on a large number of simulations, first run 
@@ -13,13 +13,13 @@ specify the number of cores, but the default is the maximum number of cores.
 
 There are three optional arguments for ``multi-planet``:
 
- :code:`-q`: there will be no output in the command line
+:code:`-q`: there will be no output in the command line
 
- :code:`-bp`: `bigplanet`_ will be ran in after ``multi-planet``.
+:code:`-bp`: `bigplanet`_ will be ran in after ``multi-planet``.
 
- .. _bigplanet: https://github.com/VirtualPlanetaryLaboratory/bigplanet
+.. _bigplanet: https://github.com/VirtualPlanetaryLaboratory/bigplanet
 
- :code:`-m`: emails the users at :code:`email` when the simulations are complete
+:code:`-m`: emails the users at :code:`email` when the simulations are complete
 
 ``multi-planet`` keeps track of the status of the parameter sweep. Should the run halt 
 early for any reason,  simply run ``multi-planet`` again it will restart all the simulations
