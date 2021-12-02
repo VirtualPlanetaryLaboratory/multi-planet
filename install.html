@@ -9,7 +9,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Multi-Planet Setup &mdash; Multi-Planet 1.0 documentation</title>
+  <title>Installation Guide &mdash; Multi-Planet 1.0 documentation</title>
   
 
   
@@ -86,9 +86,9 @@
             
             
                 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Multi-Planet Setup</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="help.html">Running Multi-Planet</a></li>
-<li class="toctree-l1"><a class="reference internal" href="mpstatus.html">Checking the status of the Multi-Planet Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mpstatus.html">Status Reports</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/VirtualPlanetaryLaboratory/multi-planet">GitHub</a></li>
 </ul>
 
@@ -121,7 +121,7 @@
     <li><a href="index.html">VPLanet</a> &raquo;</li>
       
     
-      <li>Multi-Planet Setup</li>
+      <li>Installation Guide</li>
     
       <li class="wy-breadcrumbs-aside">
         
@@ -134,14 +134,26 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="multi-planet-setup">
-<h1>Multi-Planet Setup<a class="headerlink" href="#multi-planet-setup" title="Permalink to this headline">¶</a></h1>
-<p>The easiest way to use <cite>multi-planet</cite> is to add it to your PATH.
-To do so, navigate to the multi-planet directory and execute the following command:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python setup.py
+  <section id="installation-guide">
+<h1>Installation Guide<a class="headerlink" href="#installation-guide" title="Permalink to this headline">¶</a></h1>
+<p>There are two ways to install <code class="docutils literal notranslate"><span class="pre">multi-planet</span></code>: 1) in conjunction with
+<a class="reference external" href="https://github.com/VirtualPlanetaryLaboratory/vplanet">VPLanet</a> and
+its other support scripts, or 2) from source.</p>
+<p>To install bigplanet and the other <code class="docutils literal notranslate"><span class="pre">VPLanet</span></code> packages, use the command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python -m pip install vplanet
 </pre></div>
 </div>
-<p>which also places <cite>mpstatus</cite> in your PATH.</p>
+<p>To install from source, first close the repo:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/VirtualPlanetaryLaboratory/multi-planet.git
+</pre></div>
+</div>
+<p>and then go into the directory (bigplanet) and run the setup script:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> multi-planet
+python setup.py install
+</pre></div>
+</div>
+<p>The setup script installs the various dependencies, creates the <code class="docutils literal notranslate"><span class="pre">multi-planet</span></code> and <code class="docutils literal notranslate"><span class="pre">mpstatus</span></code>
+executables, and adds them to your PATH.</p>
 </section>
 
 
@@ -163,7 +175,7 @@ To do so, navigate to the multi-planet directory and execute the following comma
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2021, Caitlyn Wilhelm.
+        &copy; Copyright 2021, The VPLanet Team.
 
     </p>
   </div>

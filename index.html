@@ -39,7 +39,7 @@
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="Multi-Planet 1.0 documentation" href="#"/>
-        <link rel="next" title="Multi-Planet Setup" href="install.html"/> 
+        <link rel="next" title="Installation Guide" href="install.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -85,9 +85,9 @@
             
             
                 <ul>
-<li class="toctree-l1"><a class="reference internal" href="install.html">Multi-Planet Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="help.html">Running Multi-Planet</a></li>
-<li class="toctree-l1"><a class="reference internal" href="mpstatus.html">Checking the status of the Multi-Planet Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mpstatus.html">Status Reports</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/VirtualPlanetaryLaboratory/multi-planet">GitHub</a></li>
 </ul>
 
@@ -135,13 +135,24 @@
             
   <section id="multi-planet-documentation">
 <h1>Multi-Planet Documentation<a class="headerlink" href="#multi-planet-documentation" title="Permalink to this headline">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">multi-planet</span></code> manages the exectution of a suite of <a href="#id1"><span class="problematic" id="id2">`VPLanet https://github.com/VirtualPlanetaryLaboratory/multi-planet&gt;`_</span></a>
+simulations that were built with <a class="reference external" href="https://github.com/VirtualPlanetaryLaboratory/vspace">VSPACE</a>.
+<code class="docutils literal notranslate"><span class="pre">multi-planet</span></code> performs simulations across multi-core computers and can be used to restart jobs that fail for any reason.
+This repository also includes <code class="docutils literal notranslate"><span class="pre">mpstatus</span></code>, which returns the current status of the parameter sweep.</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="install.html">Multi-Planet Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="help.html">Running Multi-Planet</a></li>
-<li class="toctree-l1"><a class="reference internal" href="mpstatus.html">Checking the status of the Multi-Planet Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mpstatus.html">Status Reports</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/VirtualPlanetaryLaboratory/multi-planet">GitHub</a></li>
 </ul>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>To maximize bigplanet’s power, run <code class="docutils literal notranslate"><span class="pre">vspace</span></code> and <code class="docutils literal notranslate"><span class="pre">mulit-planet</span> <span class="pre">-bp</span></code> to automatically
+build the bigplanet archive immediately after the simualtions finish.  Then create
+bigplanet files from the archive as needed, and use <code class="docutils literal notranslate"><span class="pre">bigplanet</span></code>’s scripting functions to
+extract vectors and matrices for plotting, statistical analyses, etc.</p>
 </div>
 </section>
 
@@ -152,7 +163,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="install.html" class="btn btn-neutral float-right" title="Multi-Planet Setup" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="install.html" class="btn btn-neutral float-right" title="Installation Guide" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
     </div>
@@ -162,7 +173,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2021, Caitlyn Wilhelm.
+        &copy; Copyright 2021, The VPLanet Team.
 
     </p>
   </div>
