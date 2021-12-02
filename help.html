@@ -9,7 +9,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Running Multi-Planet &mdash; Multi-Planet 1.0 documentation</title>
+  <title>Running multi-planet &mdash; Multi-Planet 1.0 documentation</title>
   
 
   
@@ -87,7 +87,7 @@
             
                 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation Guide</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Running Multi-Planet</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Running multi-planet</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mpstatus.html">Status Reports</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/VirtualPlanetaryLaboratory/multi-planet">GitHub</a></li>
 </ul>
@@ -121,7 +121,7 @@
     <li><a href="index.html">VPLanet</a> &raquo;</li>
       
     
-      <li>Running Multi-Planet</li>
+      <li>Running multi-planet</li>
     
       <li class="wy-breadcrumbs-aside">
         
@@ -135,7 +135,7 @@
            <div itemprop="articleBody">
             
   <section id="running-multi-planet">
-<h1>Running Multi-Planet<a class="headerlink" href="#running-multi-planet" title="Permalink to this headline">¶</a></h1>
+<h1>Running multi-planet<a class="headerlink" href="#running-multi-planet" title="Permalink to this headline">¶</a></h1>
 <p>To run <code class="code docutils literal notranslate"><span class="pre">multi-planet</span></code> on a large number of simulations, first run
 <code class="code docutils literal notranslate"><span class="pre">vspace</span></code> to create the simulation folders. Then, in that same directory, type:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>multi-planet &lt;input file&gt; -c <span class="o">[</span>number of cores<span class="o">]</span> -q -bp -m <span class="o">[</span>email<span class="o">]</span>
@@ -144,11 +144,9 @@
 <p>Where the “input file” <strong>must be the same file</strong> used with <code class="code docutils literal notranslate"><span class="pre">vspace</span></code>. You can
 specify the number of cores, but the default is the maximum number of cores.</p>
 <p>There are three optional arguments for <code class="docutils literal notranslate"><span class="pre">multi-planet</span></code>:</p>
-<blockquote>
-<div><p><code class="code docutils literal notranslate"><span class="pre">-q</span></code>: there will be no output in the command line</p>
+<p><code class="code docutils literal notranslate"><span class="pre">-q</span></code>: there will be no output in the command line</p>
 <p><code class="code docutils literal notranslate"><span class="pre">-bp</span></code>: <a class="reference external" href="https://github.com/VirtualPlanetaryLaboratory/bigplanet">bigplanet</a> will be ran in after <code class="docutils literal notranslate"><span class="pre">multi-planet</span></code>.</p>
 <p><code class="code docutils literal notranslate"><span class="pre">-m</span></code>: emails the users at <code class="code docutils literal notranslate"><span class="pre">email</span></code> when the simulations are complete</p>
-</div></blockquote>
 <p><code class="docutils literal notranslate"><span class="pre">multi-planet</span></code> keeps track of the status of the parameter sweep. Should the run halt
 early for any reason,  simply run <code class="docutils literal notranslate"><span class="pre">multi-planet</span></code> again it will restart all the simulations
 that crashed and continue on with the parameter sweep. You can also check the status
