@@ -3,7 +3,7 @@
   <img width = "250" src="docs/VPLanetLogo.png?raw=true"/>
 </p>
 
-<h1 align="center">multi-planet: Multi-core simulations of VPLanet</h1>
+<h1 align="center">multi-planet: Multi-core Simulations of VPLanet</h1>
 
 <p align="center">
   <a href="https://VirtualPlanetaryLaboratory.github.io/multi-planet/"><img src="https://img.shields.io/badge/read-the_docs-blue.svg?style=flat"></a>
