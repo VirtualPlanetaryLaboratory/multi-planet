@@ -39,7 +39,7 @@ jobs:
         run: |
           python -m pip install vplanet
 
-      - name: Install multi-planet
+      - name: Install multiplanet
         shell: bash -l {0}
         run: |
           python -m pip install -e .

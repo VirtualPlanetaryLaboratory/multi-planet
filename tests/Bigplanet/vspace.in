@@ -1,5 +1,5 @@
 sSrcFolder  .
-sDestFolder MP_Parallel
+sDestFolder MP_Bigplanet
 sTrialName  semi_
 
 sBodyFile   earth.in

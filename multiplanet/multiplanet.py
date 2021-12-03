@@ -6,107 +6,106 @@ import mmap
 import argparse
 import h5py
 import numpy as np
-from .bp_get import *
+from bigplanet.bp_get import GetVplanetHelp
+from bigplanet.bp_process import GatherData,DictToBP
 
 # --------------------------------------------------------------------
 
-## parallel implementation of running vplanet over a directory ##
-def parallel_run_planet(input_file, cores, quiet, bigplanet, email):
-    # gets the folder name with all the sims
-    folder_name, infiles = GetDir(input_file)
-    # gets the list of sims
-    sims = GetSims(folder_name)
+def GetSNames(in_files,sims):
+    #get system and the body names
+    body_names = []
 
-    # initalizes the checkpoint file
-    checkpoint_file = os.getcwd() + "/" + "." + folder_name
+    for file in in_files:
+        #gets path to infile
+        full_path = os.path.join(sims[0],file)
+        #if the infile is the vpl.in, then get the system name
+        if "vpl.in" in file:
+            with open(full_path, 'r') as vpl:
+                content = [line.strip().split() for line in vpl.readlines()]
+                for line in content:
+                    if line:
+                        if line[0] == 'sSystemName':
+                            system_name = line[1]
+        else:
+            with open(full_path, 'r') as infile:
+                content = [line.strip().split() for line in infile.readlines()]
+                for line in content:
+                    if line:
+                        if line[0] == 'sName':
+                            body_names.append(line[1])
 
-    # checks if the files doesn't exist and if so then it creates it
-    if os.path.isfile(checkpoint_file) == False:
-        CreateCP(checkpoint_file, input_file, quiet, sims)
+    return system_name,body_names
 
-    # if it does exist, it checks for any 0's (sims that didn't complete) and
-    # changes them to -1 to be re-ran
-    else:
-        ReCreateCP(checkpoint_file, input_file, quiet, sims)
+def GetSims(folder_name):
+    """ Pass it folder name where simulations are and returns list of simulation folders. """
+    #gets the list of sims
+    sims = sorted([f.path for f in os.scandir(os.path.abspath(folder_name)) if f.is_dir()])
+    return sims
 
-    # Get the SNames (sName and sSystemName) for the simuations
-    # Save the name of the log file
-    system_name, body_list = GetSNames(infiles, sims)
-    logfile = system_name + ".log"
-
-    lock = mp.Lock()
-    workers = []
-
-    master_hdf5_file = folder_name + ".bpl"
-    with h5py.File(master_hdf5_file, "w") as Master:
-        for i in range(cores):
-            workers.append(
-                mp.Process(
-                    target=par_worker,
-                    args=(
-                        checkpoint_file,
-                        system_name,
-                        body_list,
-                        logfile,
-                        infiles,
-                        quiet,
-                        lock,
-                        bigplanet,
-                        master_hdf5_file,
-                    ),
-                )
-            )
-        for w in workers:
-            w.start()
-        for w in workers:
-            w.join()
-
-    if bigplanet == False:
-        if  os.path.isfile(master_hdf5_file) == True:
-            sub.run(["rm", master_hdf5_file])
-    if email is not None:
-        SendMail(email, folder_name)
-
-
-def SendMail(email, destfolder):
-    Title = "Multi-Planet has finished for " + destfolder
-    Body = "Please log into your computer to verify the results. This is an auto-generated message."
-    message = "echo " + Body + " | " + "mail -s " + '"' + Title + '" ' + email
-    sub.Popen(message, shell=True)
-
-
-def GetDir(input_file):
+def GetDir(vspace_file):
     """ Give it input file and returns name of folder where simulations are located. """
+
     infiles = []
     # gets the folder name with all the sims
-    with open(input_file, "r") as vpl:
+    with open(vspace_file, 'r') as vpl:
         content = [line.strip().split() for line in vpl.readlines()]
         for line in content:
             if line:
-                if line[0] == "destfolder":
+                if line[0] == 'sDestFolder':
                     folder_name = line[1]
 
-                if line[0] == "file":
+                if line[0] == 'sBodyFile' or line[0] == 'sPrimaryFile' :
                     infiles.append(line[1])
-
     if folder_name is None:
-        print(
-            "Name of destination folder not provided in file '%s'."
-            "Use syntax 'destfolder <foldername>'" % inputf
-        )
+        raise IOError("Name of destination folder not provided in file '%s'."
+                      "Use syntax 'destfolder <foldername>'"% vspace_file)
+
 
     if os.path.isdir(folder_name) == False:
-        print(
-            "ERROR: Folder",
-            folder_name,
-            "does not exist in the current directory.",
-        )
+        print("ERROR: Folder", folder_name, "does not exist in the current directory.")
         exit()
 
     return folder_name, infiles
 
 
-def CreateCP(checkpoint_file, input_file, quiet, sims):
+
+## parallel implementation of running vplanet over a directory ##
+def parallel_run_planet(input_file, cores, quiet, verbose, bigplanet, force):
+    # gets the folder name with all the sims
+    folder_name, in_files = GetDir(input_file)
+    # gets the list of sims
+    sims = GetSims(folder_name)
+    # Get the SNames (sName and sSystemName) for the simuations
+    # Save the name of the log file
+    system_name, body_list = GetSNames(in_files, sims)
+    logfile = system_name + ".log"
+    # initalizes the checkpoint file
+    checkpoint_file = os.getcwd() + "/" + "." + folder_name
+    # checks if the files doesn't exist and if so then it creates it
+    if os.path.isfile(checkpoint_file) == False:
+        CreateCP(checkpoint_file, input_file, sims)
+
+    # if it does exist, it checks for any 0's (sims that didn't complete) and
+    # changes them to -1 to be re-ran
+    else:
+        ReCreateCP(checkpoint_file, input_file, verbose, sims, folder_name, force)
+
+    lock = mp.Lock()
+    workers = []
+
+    master_hdf5_file = os.getcwd() + "/" + folder_name + ".bpa"
+    # with h5py.File(master_hdf5_file, "w") as Master:
+    for i in range(cores):
+        workers.append(mp.Process(target=par_worker,args=(checkpoint_file,system_name,body_list,logfile,in_files,verbose,lock,bigplanet,master_hdf5_file)))
+    for w in workers:
+        w.start()
+        w.join()
+
+    if bigplanet == False:
+        if  os.path.isfile(master_hdf5_file) == True:
+            sub.run(["rm", master_hdf5_file])
+
+def CreateCP(checkpoint_file, input_file, sims):
     with open(checkpoint_file, "w") as cp:
         cp.write("Vspace File: " + os.getcwd() + "/" + input_file + "\n")
         cp.write("Total Number of Simulations: " + str(len(sims)) + "\n")
@@ -115,8 +114,8 @@ def CreateCP(checkpoint_file, input_file, quiet, sims):
         cp.write("THE END \n")
 
 
-def ReCreateCP(checkpoint_file, input_file, quiet, sims):
-    if quiet == False:
+def ReCreateCP(checkpoint_file, input_file, verbose, sims, folder_name, force):
+    if verbose:
         print("WARNING: multi-planet checkpoint file already exists!")
 
     datalist = []
@@ -137,20 +136,27 @@ def ReCreateCP(checkpoint_file, input_file, quiet, sims):
     with open(checkpoint_file, "w") as wr:
         for newline in datalist:
             wr.writelines(" ".join(newline) + "\n")
+            
+    if all(l[1] == '1' for l in datalist[2:-2]) == True:
+        if verbose:
+            print("All simulations have been ran!")
+
+        if force:
+            if verbose:
+                print("Deleting folder...")
+            os.remove(folder_name)
+            if verbose:
+                print("Deleting Checkpoint File...")
+            os.remove(checkpoint_file)
+            if verbose:
+                print("Recreating Checkpoint File...")
+            CreateCP(checkpoint_file, input_file, sims)
+        else:
+            exit()
 
 
 ## parallel worker to run vplanet ##
-def par_worker(
-    checkpoint_file,
-    system_name,
-    body_list,
-    log_file,
-    in_files,
-    quiet,
-    lock,
-    bigplanet,
-    h5_file,
-):
+def par_worker(checkpoint_file,system_name,body_list,log_file,in_files,verbose,lock,bigplanet,h5_file):
 
     while True:
 
@@ -158,6 +164,7 @@ def par_worker(
         datalist = []
         if bigplanet == True:
             data = {}
+            vplanet_help = GetVplanetHelp()
 
         with open(checkpoint_file, "r") as f:
             for newline in f:
@@ -166,11 +173,10 @@ def par_worker(
         folder = ""
 
         for l in datalist:
-            if l[1] == "-1":
+            if l[1] == '-1':
                 folder = l[0]
-                l[1] = "0"
+                l[1] = '0'
                 break
-
         if not folder:
             lock.release()
             return
@@ -181,6 +187,8 @@ def par_worker(
 
         lock.release()
 
+        if verbose:
+            print(folder)
         os.chdir(folder)
 
         # runs vplanet on folder and writes the output to the log file
@@ -211,27 +219,22 @@ def par_worker(
                 if l[0] == folder:
                     l[1] = "1"
                     break
-            if quiet == False:
+            if verbose:
                 print(folder, "completed")
-            # if bigplanet == True:
-            #     with h5py.File(h5_file, "w") as Master:
-            #         group_name = folder.split("/")[-1]
-            #         if group_name not in Master:
-            #             CreateHDF5Group(
-            #                 data,
-            #                 system_name,
-            #                 body_list,
-            #                 log_file,
-            #                 group_name,
-            #                 in_files,
-            #                 h5_file,
-            #             )
+            if bigplanet == True:
+                with h5py.File(h5_file, "a") as Master:
+                    group_name = folder.split("/")[-1]
+                    if group_name not in Master:
+                        data = GatherData(data, system_name, body_list,
+                                          log_file, in_files, vplanet_help, folder, verbose)
+                        DictToBP(data, vplanet_help, Master,
+                                 verbose, group_name, archive=True)
         else:
             for l in datalist:
                 if l[0] == folder:
                     l[1] = "-1"
                     break
-            if quiet == False:
+            if verbose:
                 print(folder, "failed")
 
         with open(checkpoint_file, "w") as f:
@@ -256,24 +259,27 @@ def Arguments():
         help="The total number of processors used",
     )
     parser.add_argument(
-        "-q",
-        "--quiet",
-        action="store_true",
-        help="No command line output for multi-planet",
-    )
-    parser.add_argument(
         "-bp",
         "--bigplanet",
         action="store_true",
         help="Runs bigplanet and creates the Bigplanet Archive file alongside running multiplanet",
     )
     parser.add_argument(
-        "-m",
-        "--email",
-        type=str,
-        help="Mails user when multi-planet is completed",
+        "-f",
+        "--force",
+        action="store_true",
+        help="forces rerun of multi-planet if completed",
     )
+    
     parser.add_argument("InputFile", help="name of the vspace file")
+    
+    # adds the quiet and verbose as mutually exclusive groups
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-q", "--quiet", action="store_true",
+                       help="no output for multiplanet")
+    group.add_argument("-v", "--verbose", action="store_true",
+                       help="Prints out excess output for multiplanet")
+    
     args = parser.parse_args()
 
     try:
@@ -284,9 +290,7 @@ def Arguments():
     except OSError:
         raise Exception("Unable to call VPLANET. Is it in your PATH?")
 
-    parallel_run_planet(
-        args.InputFile, args.cores, args.quiet, args.bigplanet, args.email
-    )
+    parallel_run_planet(args.InputFile, args.cores, args.quiet, args.verbose, args.bigplanet, args.force)
 
 
 if __name__ == "__main__":
