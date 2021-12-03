@@ -14,4 +14,4 @@
   </a>
 </p>
 
-Use `multi-planet` to run a large number of simulations, created with [vspace](https://github.com/VirtualPlanetaryLaboratory/vspace), on one or more cores.  The included script `mpstatus` can provide the current status of the simulations. Note that `multi-planet` cannot be used to run simulations across multiple computers.
+Use `multi-planet` to run a large number of simulations, created with [vspace](https://github.com/VirtualPlanetaryLaboratory/vspace), on one or more cores.  The included script `mpstatus` provides the current status of the simulations. Note that `multi-planet` cannot be used to run simulations across multiple computers.
