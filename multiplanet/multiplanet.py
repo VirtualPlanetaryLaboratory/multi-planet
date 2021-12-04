@@ -2,12 +2,12 @@ import os
 import multiprocessing as mp
 import sys
 import subprocess as sub
-import mmap
 import argparse
 import h5py
 import numpy as np
-from bigplanet.bp_get import GetVplanetHelp
-from bigplanet.bp_process import GatherData,DictToBP
+from bigplanet import *
+#from bigplanet.bp_get import GetVplanetHelp
+#from bigplanet.bp_process import GatherData,DictToBP
 
 # --------------------------------------------------------------------
 
