@@ -1,7 +1,7 @@
 multi-planet Documentation
 ==========================
 
-``multi-planet`` manages the exectution of a suite of `VPLanet https://github.com/VirtualPlanetaryLaboratory/multi-planet>`_
+``multi-planet`` manages the exectution of a suite of `VPLanet <https://github.com/VirtualPlanetaryLaboratory/multi-planet>`_
 simulations that were built with `VSPACE <https://github.com/VirtualPlanetaryLaboratory/vspace>`_. 
 ``multi-planet`` performs simulations across multi-core computers and can be used to restart jobs that fail for any reason.
 This repository also includes ``mpstatus``, which returns the current status of the parameter sweep.
