@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img width = "250" src="docs/VPLanetLogo.png?raw=true"/>
+  <img width = "250" src="docs/VPLanetLogo.png"/>
 </p>
 
 <h1 align="center">multi-planet: Multi-core Simulations of VPLanet</h1>
