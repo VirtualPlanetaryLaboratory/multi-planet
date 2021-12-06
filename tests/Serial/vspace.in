@@ -1,10 +1,10 @@
-srcfolder  .
-destfolder MP_Serial
-trialname  semi_
+sSrcFolder  .
+sDestFolder MP_Serial
+sTrialName  semi_
 
-file   earth.in
+sBodyFile   earth.in
 dSemi [1, 2, n3] a
 
-file sun.in
+sBodyFile sun.in
 
-file vpl.in
+sPrimaryFile vpl.in
