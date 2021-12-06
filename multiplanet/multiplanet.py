@@ -6,8 +6,7 @@ import argparse
 import h5py
 import numpy as np
 #from bigplanet import *
-from bigplanet.bp_get import GetVplanetHelp
-from bigplanet.bp_process import GatherData,DictToBP
+#Sfrom bigplanet.bp_process import GatherData,DictToBP
 
 # --------------------------------------------------------------------
 
@@ -66,7 +65,6 @@ def GetDir(vspace_file):
         exit()
 
     return folder_name, infiles
-
 
 
 ## parallel implementation of running vplanet over a directory ##
@@ -162,9 +160,10 @@ def par_worker(checkpoint_file,system_name,body_list,log_file,in_files,verbose,l
 
         lock.acquire()
         datalist = []
-        if bigplanet == True:
-            data = {}
-            vplanet_help = GetVplanetHelp()
+        bigplanet == False
+        #if bigplanet == True:
+            #data = {}
+            #vplanet_help = GetVplanetHelp()
 
         with open(checkpoint_file, "r") as f:
             for newline in f:
@@ -221,14 +220,14 @@ def par_worker(checkpoint_file,system_name,body_list,log_file,in_files,verbose,l
                     break
             if verbose:
                 print(folder, "completed")
-            if bigplanet == True:
-                with h5py.File(h5_file, "a") as Master:
-                    group_name = folder.split("/")[-1]
-                    if group_name not in Master:
-                        data = GatherData(data, system_name, body_list,
-                                          log_file, in_files, vplanet_help, folder, verbose)
-                        DictToBP(data, vplanet_help, Master,
-                                 verbose, group_name, archive=True)
+            # if bigplanet == True:
+            #     with h5py.File(h5_file, "a") as Master:
+            #         group_name = folder.split("/")[-1]
+            #         if group_name not in Master:
+            #             data = GatherData(data, system_name, body_list,
+            #                               log_file, in_files, vplanet_help, folder, verbose)
+            #             DictToBP(data, vplanet_help, Master,
+            #                      verbose, group_name, archive=True)
         else:
             for l in datalist:
                 if l[0] == folder:

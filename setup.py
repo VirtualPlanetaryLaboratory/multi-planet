@@ -25,6 +25,7 @@ setup(
         "argparse",
         "pandas",
         "scipy",
+        "vspace",
         "bigplanet",
     ],
     entry_points={

@@ -1,9 +1,0 @@
-sDestFolder MP_Bigplanet
-sArchiveFile MP_Bigplanet.bpa
-
-saBodyFiles earth.in venus.in sun.in
-            
-sPrimaryFile vpl.in
-
-
-             
