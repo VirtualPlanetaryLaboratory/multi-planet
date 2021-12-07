@@ -17,4 +17,4 @@ The following will be printed to the command line:
     Number of Simulations in progress: 5
     Number of Simulations remaining: 20
 
-but with the proper statistics shown.
+but with the instantaneous statistics shown.
