@@ -1,0 +1,10 @@
+sSrcFolder  .
+sDestFolder MP_Bigplanet
+sTrialName  semi_
+
+sBodyFile   earth.in
+dSemi [1, 2, n3] a
+
+sBodyFile sun.in
+
+sPrimaryFile vpl.in
