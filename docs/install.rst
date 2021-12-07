@@ -1,8 +1,8 @@
-Multi-Planet Setup
+MultiPlanet Setup
 ==================
 
-The easiest way to use `multi-planet` is to add it to your PATH.
-To do so, navigate to the multi-planet directory and execute the following command:
+The easiest way to use `MultiPlanet` is to add it to your PATH.
+To do so, navigate to the MultiPlanet directory and execute the following command:
 
 .. code-block:: bash
 
