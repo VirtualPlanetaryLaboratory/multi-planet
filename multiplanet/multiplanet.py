@@ -136,8 +136,7 @@ def ReCreateCP(checkpoint_file, input_file, verbose, sims, folder_name, force):
             wr.writelines(" ".join(newline) + "\n")
             
     if all(l[1] == '1' for l in datalist[2:-2]) == True:
-        if verbose:
-            print("All simulations have been ran!")
+        print("All simulations have been ran")
 
         if force:
             if verbose:
