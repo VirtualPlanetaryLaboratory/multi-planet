@@ -146,3 +146,5 @@ dmypy.json
 # SCM version
 multiplanet/multiplanet_version.py
 .vscode/settings.json
+junit/test-results.xml
+tests/Bigplanet/junit/test-results.xml
