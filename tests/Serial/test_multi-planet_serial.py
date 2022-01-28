@@ -1,12 +1,14 @@
-import subprocess
-import numpy as np
+import multiprocessing as mp
 import os
 import pathlib
-import multiprocessing as mp
+import subprocess
 import sys
 
+import numpy as np
+
+
 def test_mp_serial():
-    #gets current path
+    # gets current path
     path = pathlib.Path(__file__).parents[0].absolute()
     sys.path.insert(1, str(path.parents[0]))
 
@@ -15,14 +17,19 @@ def test_mp_serial():
 
     # Run multi-planet
     if not (path / ".MP_Serial").exists():
-        subprocess.check_output(["multiplanet", "vspace.in", "-c", "1"], cwd=path)
+        subprocess.check_output(
+            ["multiplanet", "vspace.in", "-c", "1"], cwd=path
+        )
 
-    folders = sorted([f.path for f in os.scandir(path / "MP_Serial") if f.is_dir()])
+    folders = sorted(
+        [f.path for f in os.scandir(path / "MP_Serial") if f.is_dir()]
+    )
 
     for i in range(len(folders)):
         os.chdir(folders[i])
-        assert os.path.isfile('earth.earth.forward') == True
-        os.chdir('../')
+        assert os.path.isfile("earth.earth.forward") == True
+        os.chdir("../")
+
 
 if __name__ == "__main__":
     test_mp_serial()

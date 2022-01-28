@@ -22,7 +22,7 @@ There are three optional arguments for ``MultiPlanet``:
 :code:`-m`: emails the users at :code:`email` when the simulations are complete
 
 
-``MultiPlanet`` keeps track of the status of the parameter sweep. Should the run halt 
+``MultiPlanet`` keeps track of the status of the parameter sweep. Should the run halt
 early for any reason,  simply run ``MultiPlanet`` again it will restart all the simulations
 that crashed and continue on with the parameter sweep. You can also check the status
 of the parameter sweep with `mpstatus <mpstatus>`_.
