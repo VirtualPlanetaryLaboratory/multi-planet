@@ -96,7 +96,10 @@ def parallel_run_planet(input_file, cores, quiet, verbose, bigplanet, force):
     for i in range(cores):
         workers.append(mp.Process(target=par_worker,args=(checkpoint_file,system_name,body_list,logfile,in_files,verbose,lock,bigplanet,master_hdf5_file)))
     for w in workers:
+        print("Starting worker")
         w.start()
+    
+    for w in workers:
         w.join()
 
     if bigplanet == False:
