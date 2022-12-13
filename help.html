@@ -143,16 +143,24 @@ create the simulation folders. Then, in that same directory, type:</p>
 </div>
 <p>Where the “input file” <strong>must be the same file</strong> used with <code class="code docutils literal notranslate"><span class="pre">VSPACE</span></code>. You can
 specify the number of cores, but the default is the maximum number of cores.</p>
-<p>There are three optional arguments for <code class="docutils literal notranslate"><span class="pre">MultiPlanet</span></code>:</p>
+<p>There are three optional arguments for <code class="code docutils literal notranslate"><span class="pre">MultiPlanet</span></code>:</p>
 <p><code class="code docutils literal notranslate"><span class="pre">-q</span></code>: there will be no output in the command line</p>
 <blockquote>
-<div><p><code class="code docutils literal notranslate"><span class="pre">-bp</span></code>: <a href="#id1"><span class="problematic" id="id2">`BigPlanet`_</span></a> will be ran in conjunction with MultiPlanet.</p>
+<div><p><code class="code docutils literal notranslate"><span class="pre">-bp</span></code>: <a href="#id1"><span class="problematic" id="id2">`BigPlanet`_</span></a> will be ran in conjunction with <code class="code docutils literal notranslate"><span class="pre">MultiPlanet</span></code>.</p>
 </div></blockquote>
 <p><code class="code docutils literal notranslate"><span class="pre">-m</span></code>: emails the users at <code class="code docutils literal notranslate"><span class="pre">email</span></code> when the simulations are complete</p>
-<p><code class="docutils literal notranslate"><span class="pre">MultiPlanet</span></code> keeps track of the status of the parameter sweep. Should the run halt
-early for any reason,  simply run <code class="docutils literal notranslate"><span class="pre">MultiPlanet</span></code> again it will restart all the simulations
+<p><code class="code docutils literal notranslate"><span class="pre">MultiPlanet</span></code> keeps track of the status of the parameter sweep. Should the run halt
+early for any reason,  simply run <code class="code docutils literal notranslate"><span class="pre">MultiPlanet</span></code> again it will restart all the simulations
 that crashed and continue on with the parameter sweep. You can also check the status
 of the parameter sweep with <a class="reference external" href="mpstatus">mpstatus</a>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If you decide to <em>rerun</em> a parameter sweep, you must delete the checkpoint file!
+The name of this file is <code class="docutils literal notranslate"><span class="pre">.sDestFolder</span></code>, where sDestFolder is the option in <code class="code docutils literal notranslate"><span class="pre">VSPACE</span></code>
+the provdes the name for the directory that contains the simulations. If you do not delete
+this file, the <code class="code docutils literal notranslate"><span class="pre">MultiPlanet</span></code> will conclude your sweep has finished and will not restart
+the simulations.</p>
+</div>
 </section>
 
 

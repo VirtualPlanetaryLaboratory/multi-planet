@@ -148,6 +148,14 @@ Number of Simulations remaining: <span class="m">20</span>
 </pre></div>
 </div>
 <p>but with the instantaneous statistics shown.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If you decide to <em>rerun</em> a parameter sweep, you must delete the checkpoint file!
+The name of this file is <code class="docutils literal notranslate"><span class="pre">.sDestFolder</span></code>, where sDestFolder is the option in <code class="code docutils literal notranslate"><span class="pre">VSPACE</span></code>
+the provdes the name for the directory that contains the simulations. If you do not delete
+this file, the <code class="code docutils literal notranslate"><span class="pre">MultiPlanet</span></code> will conclude your sweep has finished and will not restart
+the simulations.</p>
+</div>
 </section>
 
 
