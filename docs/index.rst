@@ -17,7 +17,7 @@ This repository also includes ``mpstatus``, which returns the current status of 
 .. note::
 
     To maximize MultiPlanet's power, run ``VSPACE`` with the ``-bp`` option to automatically
-    build the [`BigPlanet`](https://github.com/VirtualPlanetaryLaboratory/bigplanet) archive 
+    build the `BigPlanet <https://github.com/VirtualPlanetaryLaboratory/bigplanet>`_ archive 
     immediately after the simulations finish.  Then create  BigPlanet files from the 
     archive as needed, and use ``BigPlanet``'s scripting functions to 
     extract vectors and matrices for plotting, statistical analyses, etc.
