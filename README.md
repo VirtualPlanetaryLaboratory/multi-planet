@@ -7,6 +7,9 @@
 
 <p align="center">
   <a href="https://VirtualPlanetaryLaboratory.github.io/multi-planet/"><img src="https://img.shields.io/badge/read-the_docs-blue.svg?style=flat"></a>
+  <a href="https://github.com/VirtualPlanetaryLaboratory/multi-planet//actions/workflows/docs.yml">
+  <img src="https://github.com/VirtualPlanetaryLaboratory/multi-planet//actions/workflows/docs.yml/badge.svg"/>
+  </a>
    <img src="https://img.shields.io/badge/Python-3.6--3.9-orange.svg"/></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-purple.svg"/></a>
     <a href="https://github.com/VirtualPlanetaryLaboratory/multi-planet//actions/workflows/tests.yml">
