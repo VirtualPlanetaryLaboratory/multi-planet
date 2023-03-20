@@ -1,8 +1,8 @@
 Installation Guide
 ==================
 
-There are two ways to install ``MultiPlanet``: 1) in conjunction with 
-`VPLanet <https://github.com/VirtualPlanetaryLaboratory/vplanet>`_ and 
+There are two ways to install ``MultiPlanet``: 1) in conjunction with
+`VPLanet <https://github.com/VirtualPlanetaryLaboratory/vplanet>`_ and
 its other support scripts, or 2) from source.
 
 To install MultiPlanet and the other ``VPLanet`` packages, use the command:
@@ -25,4 +25,4 @@ and then go into the directory (MultiPlanet) and run the setup script:
     python setup.py install
 
 The setup script installs the various dependencies, creates the ``MultiPlanet`` and ``mpstatus``
-executables, and adds them to your PATH. 
+executables, and adds them to your PATH.
