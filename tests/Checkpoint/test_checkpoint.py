@@ -1,19 +1,19 @@
 import subprocess
 import numpy as np
 import os
-import sys
 import multiprocessing as mp
 import warnings
 import pathlib
+import sys
 import shutil
 
-def test_mpstatus():
+def test_checkpoint():
     # Get current path
     path = pathlib.Path(__file__).parents[0].absolute()
     sys.path.insert(1, str(path.parents[0]))
 
-    dir = (path / "MP_Status")
-    checkpoint = (path / ".MP_Status")
+    dir = (path / "MP_Checkpoint")
+    checkpoint = (path / ".MP_Checkpoint")
 
     # Get the number of cores on the machine
     cores = mp.cpu_count()
@@ -25,15 +25,14 @@ def test_mpstatus():
             shutil.rmtree(dir)
         if (checkpoint).exists():
             os.remove(checkpoint)
-            
+
         # Run vspace
         subprocess.check_output(["vspace", "vspace.in"], cwd=path)
 
-        # Run multi-planet and mpstatus
+        # Run multi-planet
         subprocess.check_output(["multiplanet", "vspace.in"], cwd=path)
-        subprocess.check_output(["mpstatus", "vspace.in"], cwd=path)
-
-        # Get list of folders
+        
+        # Gets list of folders
         folders = sorted([f.path for f in os.scandir(dir) if f.is_dir()])
 
         for i in range(len(folders)):
@@ -42,4 +41,4 @@ def test_mpstatus():
             os.chdir('../')
 
 if __name__ == "__main__":
-    test_mpstatus()
+    test_checkpoint()
