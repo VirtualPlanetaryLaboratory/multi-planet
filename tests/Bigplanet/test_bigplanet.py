@@ -4,29 +4,34 @@ import pathlib
 import subprocess
 import sys
 import warnings
-
+import shutil
 import numpy as np
 
 
-def test_mp_bigplanet():
-    # gets current path
+def test_bigplanet():
+    # Get current path
     path = pathlib.Path(__file__).parents[0].absolute()
     sys.path.insert(1, str(path.parents[0]))
 
-    # gets the number of cores on the machine
+    dir = (path / "MP_Bigplanet")
+    checkpoint = (path / ".MP_Bigplanet")
+
+    # Get the number of cores on the machine
     cores = mp.cpu_count()
     if cores == 1:
         warnings.warn("There is only 1 core on the machine", stacklevel=3)
     else:
+        # Remove anything from previous tests
+        if (dir).exists():
+            shutil.rmtree(dir)
+        if (checkpoint).exists():
+            os.remove(checkpoint)
+
         # Run vspace
-        if not (path / "MP_Bigplanet").exists():
-            subprocess.check_output(["vspace", "vspace.in"], cwd=path)
+        subprocess.check_output(["vspace", "vspace.in"], cwd=path)
 
         # Run multi-planet
-        if not (path / ".MP_Bigplanet").exists():
-            subprocess.check_output(
-                ["multiplanet", "vspace.in", "-bp"], cwd=path
-            )
+        subprocess.check_output(["multiplanet", "vspace.in", "-bp"], cwd=path)
 
         file = path / "MP_Bigplanet.bpa"
 
@@ -34,4 +39,4 @@ def test_mp_bigplanet():
 
 
 if __name__ == "__main__":
-    test_mp_bigplanet()
+    test_bigplanet()
