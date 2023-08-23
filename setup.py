@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from setuptools import setup
 import os
 
+from setuptools import setup
 
 # Setup!
 setup(
@@ -25,6 +25,7 @@ setup(
         "argparse",
         "pandas",
         "scipy",
+        "vspace",
         "bigplanet",
     ],
     entry_points={

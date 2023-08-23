@@ -43,7 +43,8 @@ tests/Parallel/MP_Parallel/
 tests/Parallel/.*
 tests/Serial/MP_Serial/
 tests/Serial/.*
-
+tests/Bigplanet/MP_Bigplanet/
+tests/Bigplanet/.*
 
 
 # Installer logs
@@ -63,7 +64,8 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
-
+*.bpa
+*.bpf
 # Translations
 *.mo
 *.pot
@@ -143,3 +145,6 @@ dmypy.json
 
 # SCM version
 multiplanet/multiplanet_version.py
+.vscode/settings.json
+junit/test-results.xml
+tests/Bigplanet/junit/test-results.xml

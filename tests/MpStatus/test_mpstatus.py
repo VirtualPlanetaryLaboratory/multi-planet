@@ -1,8 +1,8 @@
-import subprocess
-import numpy as np
-import os
-import sys
 import multiprocessing as mp
+import os
+import pathlib
+import subprocess
+import sys
 import warnings
 import pathlib
 import shutil
@@ -18,7 +18,7 @@ def test_mpstatus():
     # Get the number of cores on the machine
     cores = mp.cpu_count()
     if cores == 1:
-        warnings.warn("There is only 1 core on the machine",stacklevel=3)
+        warnings.warn("There is only 1 core on the machine", stacklevel=3)
     else:
         # Remove anything from previous tests
         if (dir).exists():
@@ -38,8 +38,9 @@ def test_mpstatus():
 
         for i in range(len(folders)):
             os.chdir(folders[i])
-            assert os.path.isfile('earth.earth.forward') == True
-            os.chdir('../')
+            assert os.path.isfile("earth.earth.forward") == True
+            os.chdir("../")
+
 
 if __name__ == "__main__":
     test_mpstatus()
