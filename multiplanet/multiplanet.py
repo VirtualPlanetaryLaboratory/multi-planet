@@ -6,8 +6,8 @@ import sys
 
 import h5py
 import numpy as np
-from bigplanet.bp_get import GetVplanetHelp
-from bigplanet.bp_process import DictToBP, GatherData
+from bigplanet.read import GetVplanetHelp
+from bigplanet.process import DictToBP, GatherData
 
 # --------------------------------------------------------------------
 
