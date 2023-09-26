@@ -31,11 +31,11 @@ def test_bigplanet():
         subprocess.check_output(["vspace", "vspace.in"], cwd=path)
 
         # Run multi-planet
-        #subprocess.check_output(["multiplanet", "vspace.in", "-bp"], cwd=path)
+        subprocess.check_output(["multiplanet", "vspace.in", "-bp"], cwd=path)
 
-        #file = path / "MP_Bigplanet.bpa"
+        file = path / "MP_Bigplanet.bpa"
 
-        #assert os.path.isfile(file) == True
+        assert os.path.isfile(file) == True
 
 
 if __name__ == "__main__":
