@@ -32,7 +32,7 @@ jobs:
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
 
-      - name: Install vplanet-private pre-release
+      - name: Install vplanet
         id: install
         if: steps.setup_python.outcome == 'success'
         shell: bash -l {0}
