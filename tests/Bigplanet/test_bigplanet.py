@@ -30,12 +30,17 @@ def test_bigplanet():
         # Run vspace
         subprocess.check_output(["vspace", "vspace.in"], cwd=path)
 
-        # Run multi-planet
-        #subprocess.check_output(["multiplanet", "vspace.in", "-bp"], cwd=path)
+        # Run multi-planet with BigPlanet archive
+        subprocess.check_output(["multiplanet", "vspace.in", "-bp"], cwd=path)
 
-        #file = path / "MP_Bigplanet.bpa"
+        file = path / "MP_Bigplanet.bpa"
 
-        #assert os.path.isfile(file) == True
+        assert os.path.isfile(file) == True
+
+        # Also verify simulations completed
+        folders = sorted([f.path for f in os.scandir(dir) if f.is_dir()])
+        for i in range(len(folders)):
+            assert os.path.isfile(os.path.join(folders[i], "earth.earth.forward")) == True
 
 
 if __name__ == "__main__":
