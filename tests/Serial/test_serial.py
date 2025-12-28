@@ -23,14 +23,12 @@ def test_serial():
     subprocess.check_output(["vspace", "vspace.in"], cwd=path)
 
     # Run multi-planet
-    # subprocess.check_output(["multiplanet", "vspace.in", "-c", "1"], cwd=path)
+    subprocess.check_output(["multiplanet", "vspace.in", "-c", "1"], cwd=path)
 
-    # folders = sorted([f.path for f in os.scandir(dir) if f.is_dir()])
+    folders = sorted([f.path for f in os.scandir(dir) if f.is_dir()])
 
-    # for i in range(len(folders)):
-    #     os.chdir(folders[i])
-    #     assert os.path.isfile('earth.earth.forward') == True
-    #     os.chdir('../')
+    for i in range(len(folders)):
+        assert os.path.isfile(os.path.join(folders[i], 'earth.earth.forward')) == True
 
 if __name__ == "__main__":
     test_serial()
