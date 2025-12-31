@@ -2,20 +2,18 @@
 # Coverage configuration for multiplanet
 source = multiplanet
 
-# Note: Coverage will show 0% for multiplanet because tests invoke
-# the CLI tools as subprocess commands (multiplanet, mpstatus) rather
-# than importing Python modules directly. This is expected and normal
-# for CLI tool testing.
+# Multiplanet uses a hybrid testing strategy:
+# 1. Unit tests (tests/unit/) - Import modules directly for code coverage
+# 2. Integration tests (tests/*/) - Call CLI via subprocess for end-to-end validation
 #
-# To test coverage properly, tests would need to:
-# 1. Import multiplanet.multiplanet and multiplanet.mpstatus modules directly
-# 2. Use coverage.py's subprocess tracking (complex configuration)
+# Unit tests provide code coverage metrics by importing multiplanet.multiplanet
+# and multiplanet.mpstatus modules directly. Integration tests validate the
+# user-facing CLI interface by calling multiplanet/mpstatus as subprocess commands.
 #
-# The current approach validates the CLI interface, which is what users
-# actually interact with, so this testing strategy is appropriate.
+# This approach combines the best of both worlds: measurable coverage from unit
+# tests and real-world validation from integration tests.
 
 [report]
-# Ignore missing coverage since tests use subprocess
 precision = 2
 show_missing = True
 
