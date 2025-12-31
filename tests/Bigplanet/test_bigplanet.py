@@ -30,12 +30,10 @@ def test_bigplanet():
         # Run vspace
         subprocess.check_output(["vspace", "vspace.in"], cwd=path)
 
-        # KNOWN ISSUE: multiplanet -bp hangs due to multiprocessing + HDF5 deadlock
-        # See: BUGS.md for details
-        # TODO: Fix in Sprint 4 when refactoring multiprocessing architecture
-
-        # For now, test multiplanet without BigPlanet integration
-        subprocess.check_output(["multiplanet", "vspace.in"], cwd=path, timeout=600)
+        # Run multiplanet with BigPlanet integration (-bp flag)
+        # FIXED: Adopted BigPlanet's architecture to resolve deadlock
+        # GetVplanetHelp() now called once in main process, not in worker loop
+        subprocess.check_output(["multiplanet", "vspace.in", "-bp"], cwd=path, timeout=600)
 
         # Verify simulations completed
         folders = sorted([f.path for f in os.scandir(dir) if f.is_dir()])
@@ -45,9 +43,12 @@ def test_bigplanet():
             forward_file = os.path.join(folders[i], "earth.earth.forward")
             assert os.path.isfile(forward_file), f"Missing output file in {folders[i]}"
 
-        # TODO: Re-enable BigPlanet archive test after fixing multiprocessing issue
-        # file = path / "MP_Bigplanet.bpa"
-        # assert os.path.isfile(file) == True
+        # Verify BigPlanet archive was created
+        file = path / "MP_Bigplanet.bpa"
+        assert os.path.isfile(file) == True, "BigPlanet archive file not created"
+
+        # Verify archive is not empty (more than just header)
+        assert file.stat().st_size > 1000, f"BigPlanet archive is too small ({file.stat().st_size} bytes)"
 
 
 if __name__ == "__main__":

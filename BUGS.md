@@ -2,13 +2,17 @@
 
 This document tracks critical bugs discovered during the testing infrastructure restoration.
 
-## Critical #1: BigPlanet + Multiprocessing Deadlock
+## Critical #1: BigPlanet + Multiprocessing Deadlock ✅ FIXED
 
-**Location:** [multiplanet/multiplanet.py:212-292](multiplanet/multiplanet.py:212-292)
+**Location:** [multiplanet/multiplanet.py](multiplanet/multiplanet.py) (original lines 212-292)
 
-**Severity:** CRITICAL - Causes infinite hang when using `-bp` flag
+**Severity:** CRITICAL - Caused infinite hang when using `-bp` flag
 
 **Discovered:** 2025-12-31 during pytest execution
+
+**Fixed:** 2025-12-31 by adopting BigPlanet's architecture
+
+**Status:** ✅ **RESOLVED** - All tests passing with -bp flag enabled
 
 ### Description
 
@@ -131,24 +135,130 @@ def fnBigplanetWriter(queue, sH5File, ...):
 - More complex architecture
 - Requires significant refactoring
 
+### Fix Applied (2025-12-31)
+
+Adopted BigPlanet's architecture to resolve all root causes:
+
+**1. Moved `GetVplanetHelp()` to main process:**
+```python
+# NEW: Called ONCE in main process
+def parallel_run_planet(..., bigplanet, ...):
+    if bigplanet:
+        vplanet_help = GetVplanetHelp()  # ONCE, before spawning workers
+    else:
+        vplanet_help = None
+
+    # Passed to workers as immutable parameter
+    for i in range(cores):
+        workers.append(
+            mp.Process(target=par_worker, args=(..., vplanet_help))
+        )
+```
+
+**2. Extracted modular helper functions:**
+- `fnGetNextSimulation()` - Thread-safe checkpoint file access
+- `fnMarkSimulationComplete()` - Mark simulation as complete
+- `fnMarkSimulationFailed()` - Mark simulation as failed
+
+**3. Refactored worker loop with minimal critical sections:**
+```python
+def par_worker(..., vplanet_help):  # Receives pre-fetched help
+    while True:
+        # Get next sim (with lock)
+        sFolder = fnGetNextSimulation(checkpoint, lock)
+        if sFolder is None:
+            return
+
+        # Run vplanet (NO LOCK - independent work)
+        vplanet = sub.Popen(["vplanet", "vpl.in"], cwd=sFolder, ...)
+        stdout, stderr = vplanet.communicate()  # WAIT for completion
+
+        # Process BigPlanet data (NO LOCK - CPU-bound)
+        if vplanet.returncode == 0 and vplanet_help:
+            data = GatherData(...)
+
+            # Write to HDF5 (WITH LOCK - minimal critical section)
+            lock.acquire()
+            try:
+                with h5py.File(h5_file, "a") as Master:
+                    DictToBP(data, vplanet_help, Master, ...)
+            finally:
+                lock.release()
+
+        # Update checkpoint (with lock)
+        fnMarkSimulationComplete(checkpoint, sFolder, lock)
+```
+
+**4. Fixed subprocess return code handling:**
+- Changed from `poll()` (returns None if running) to `communicate()` (waits for completion)
+- Now properly detects failed simulations via `returncode`
+
+**5. Eliminated `os.chdir()` calls:**
+- Use `cwd=sFolder` parameter in `Popen()` instead
+- No more global state pollution
+
+### Test Results
+
+**Before Fix:**
+```bash
+$ pytest tests/Bigplanet/test_bigplanet.py
+# Hung for 12+ hours, killed manually
+# Archive: 800 bytes (header only, no data)
+```
+
+**After Fix:**
+```bash
+$ pytest tests/Bigplanet/test_bigplanet.py
+tests/Bigplanet/test_bigplanet.py::test_bigplanet PASSED [100%]
+1 passed in 15.86s
+
+$ ls -lh tests/Bigplanet/MP_Bigplanet.bpa
+-rw-r--r--  2.0M  MP_Bigplanet.bpa
+
+$ h5ls tests/Bigplanet/MP_Bigplanet.bpa
+semi_a0    Group
+semi_a1    Group
+semi_a2    Group
+```
+
+**Full Test Suite:**
+```bash
+$ pytest tests/ -v
+tests/Bigplanet/test_bigplanet.py::test_bigplanet PASSED     [ 20%]
+tests/Checkpoint/test_checkpoint.py::test_checkpoint PASSED  [ 40%]
+tests/MpStatus/test_mpstatus.py::test_mpstatus PASSED        [ 60%]
+tests/Parallel/test_parallel.py::test_parallel PASSED        [ 80%]
+tests/Serial/test_serial.py::test_serial PASSED              [100%]
+
+5 passed in 63.89s
+```
+
 ### Testing Status
 
-**NOT YET FIXED** - BigPlanet integration test disabled to allow test suite to complete
+✅ **FIXED AND VALIDATED**
+- BigPlanet integration test re-enabled with -bp flag
+- All 5 tests passing consistently
+- HDF5 archive created successfully (2.0 MB with data)
+- No deadlocks observed
 
 ### Related Issues
 
-- Bug #2 (subprocess return code) - Need to fix together
-- General multiprocessing architecture needs redesign
+- Bug #2 (subprocess return code) - ✅ **ALSO FIXED** in this refactoring
+- Architecture redesign - ✅ **COMPLETED** using BigPlanet's proven patterns
 
 ---
 
-## Critical #2: Incorrect Subprocess Return Code Handling
+## Critical #2: Incorrect Subprocess Return Code Handling ✅ FIXED
 
-**Location:** [multiplanet/multiplanet.py:250-264](multiplanet/multiplanet.py:250-264)
+**Location:** [multiplanet/multiplanet.py](multiplanet/multiplanet.py) (original lines 250-264)
 
-**Severity:** HIGH - Causes incorrect success/failure classification of simulations
+**Severity:** HIGH - Caused incorrect success/failure classification of simulations
 
 **Discovered:** 2025-12-28 during test restoration
+
+**Fixed:** 2025-12-31 during architecture refactoring
+
+**Status:** ✅ **RESOLVED** - Now using communicate() with proper returncode checking
 
 ### Description
 
@@ -274,13 +384,60 @@ else:
     pass
 ```
 
+### Fix Applied (2025-12-31)
+
+Implemented the "Alternative Fix" using `communicate()`:
+
+```python
+# NEW: Refactored par_worker() subprocess handling
+vplanet_log_path = os.path.join(sFolder, "vplanet_log")
+
+with open(vplanet_log_path, "a+") as vplf:
+    vplanet = sub.Popen(
+        ["vplanet", "vpl.in"],
+        cwd=sFolder,  # No shell=True, no os.chdir()
+        stdout=sub.PIPE,
+        stderr=sub.PIPE,
+        universal_newlines=True,
+    )
+    # communicate() waits for completion and returns output
+    stdout, stderr = vplanet.communicate()
+
+    vplf.write(stderr)
+    vplf.write(stdout)
+
+# Check actual return code
+return_code = vplanet.returncode
+
+if return_code == 0:
+    # Process succeeded - mark complete
+    fnMarkSimulationComplete(checkpoint_file, sFolder, lock)
+else:
+    # Process failed - mark for retry
+    fnMarkSimulationFailed(checkpoint_file, sFolder, lock)
+```
+
+**Additional fixes in same refactoring:**
+- Removed `shell=True` (security improvement)
+- Removed `os.chdir()` (thread-safety improvement)
+- Use `cwd=sFolder` parameter instead
+- Explicit `returncode == 0` check (not `is None`)
+
 ### Testing Status
 
-**NOT YET FIXED** - This bug will be addressed in Sprint 4 (Refactoring phase) as documented in [claude.md](claude.md). The current test restoration work accepts this bug to maintain separation between testing and refactoring phases.
+✅ **FIXED AND VALIDATED**
+- All simulations now correctly classified as success/failure
+- Failed simulations marked with status=-1 for retry
+- Successful simulations marked with status=1
+- Tests verify output files exist only for successful runs
 
 ### Workaround
 
-Currently, tests may show false positives. Manual verification of output files is recommended:
+No longer needed - bug is fixed.
+
+### Previous Workaround
+
+Manual verification was required:
 ```bash
 # Check if simulation actually completed
 ls MP_Serial/*/earth.earth.forward
