@@ -2,72 +2,87 @@ name: tests
 
 on:
   push:
-    branches: [master, main]
+    branches: [main]
   pull_request:
-    branches: [master, main]
+    branches: [main]
 
 jobs:
   tests:
-    name: 'Run tests on py${{ matrix.python-version }}'
-    runs-on: ubuntu-latest
+    name: 'py${{ matrix.python-version}} on ${{ matrix.os }}'
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - python-version: '3.6'
-          - python-version: '3.7'
-          - python-version: '3.8'
-          - python-version: '3.9'
+        # Per user requirements: debugging matrix set to ubuntu-22.04 and 3.9
+        os: [ubuntu-22.04]
+        python-version: ["3.9"]
+        # Full matrix for production (commented out for debugging):
+        # os: [ubuntu-22.04, ubuntu-24.04, macos-15-intel, macos-latest]
+        # python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        # exclude:
+        #   # macOS latest doesn't support Python 3.9 well on ARM
+        #   - os: macos-latest
+        #     python-version: "3.9"
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        id: setup_python
-        uses: conda-incubator/setup-miniconda@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
-          activate-environment: vplanet
-          environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
+          cache: 'pip'
 
-      - name: Install vplanet
-        id: install
-        if: steps.setup_python.outcome == 'success'
-        shell: bash -l {0}
+      - name: Install dependencies
         run: |
-          python -m pip install vplanet
+          python -m pip install --upgrade pip
+          # Install public releases from PyPI
+          python -m pip install vplanet vspace bigplanet
 
       - name: Install multiplanet
-        shell: bash -l {0}
         run: |
           python -m pip install -e .
 
-      - name: Run tests
-        if: steps.install.outcome == 'success'
-        shell: bash -l {0}
-        run: python -m pytest -v tests --junitxml=junit/test-results.xml --cov=multiplanet/ --cov-report=xml
-
-      - name: Get unique id
-        id: unique-id
-        env:
-          STRATEGY_CONTEXT: ${{ toJson(strategy) }}
+      - name: Install test dependencies
         run: |
-          export JOB_ID=`echo $STRATEGY_CONTEXT | md5sum`
-          echo "::set-output name=id::$JOB_ID"
+          python -m pip install pytest pytest-cov pytest-timeout
 
-      - name: Publish unit test results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        if: always()
+      - name: Run diagnostic test
+        timeout-minutes: 3
+        run: |
+          # First run a simple unit test to verify pytest works
+          echo "Running single test as diagnostic..."
+          python -m pytest tests/Serial/test_serial.py -v -s
+
+      - name: Run tests
+        timeout-minutes: 20
+        run: |
+          # Run all tests with verbose output, per-test timeout, and coverage
+          python -m pytest tests/ -v -s --timeout=300 --junitxml=junit/test-results-${{ matrix.os }}-${{ matrix.python-version }}.xml --cov=multiplanet --cov-report=xml --cov-report=term
+
+      - name: Upload coverage to Codecov
+        # Only upload from one runner to avoid redundant API calls
+        if: matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9'
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          flags: ${{ matrix.os }}-py${{ matrix.python-version }}
+          name: ${{ matrix.os }}-py${{ matrix.python-version }}
+          fail_ci_if_error: false
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always() && runner.os == 'Linux'
         with:
           files: junit/test-*.xml
-          comment_mode: update last
+          check_name: Test Results (py${{ matrix.python-version }} on ${{ matrix.os }})
 
-      - name: CodeCov
-        uses: codecov/codecov-action@v2.1.0
+      - name: Publish test results (macOS)
+        uses: EnricoMi/publish-unit-test-result-action/composite@v2
+        if: always() && runner.os == 'macOS'
         with:
-          files: ./coverage.xml
-        #shell: bash -l {0}
-        #run: |
-        #  bash <(curl -s https://codecov.io/bash)
+          files: junit/test-*.xml
+          check_name: Test Results (py${{ matrix.python-version }} on ${{ matrix.os }})
