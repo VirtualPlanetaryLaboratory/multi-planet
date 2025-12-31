@@ -60,6 +60,7 @@ jobs:
         timeout-minutes: 20
         run: |
           # Run all tests with verbose output, per-test timeout, and coverage
+          # Note: Coverage shows 0% because tests invoke CLI as subprocess (expected for CLI tools)
           python -m pytest tests/ -v -s --timeout=300 --junitxml=junit/test-results-${{ matrix.os }}-${{ matrix.python-version }}.xml --cov=multiplanet --cov-report=xml --cov-report=term
 
       - name: Upload coverage to Codecov
