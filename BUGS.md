@@ -2,7 +2,147 @@
 
 This document tracks critical bugs discovered during the testing infrastructure restoration.
 
-## Critical: Incorrect Subprocess Return Code Handling
+## Critical #1: BigPlanet + Multiprocessing Deadlock
+
+**Location:** [multiplanet/multiplanet.py:212-292](multiplanet/multiplanet.py:212-292)
+
+**Severity:** CRITICAL - Causes infinite hang when using `-bp` flag
+
+**Discovered:** 2025-12-31 during pytest execution
+
+### Description
+
+The `multiplanet -bp` command hangs indefinitely due to a deadlock in the multiprocessing + HDF5 interaction. The issue occurs when multiple worker processes attempt to write to the same HDF5 archive file.
+
+### Symptoms
+
+- Test hangs for 12+ hours without completing
+- BigPlanet archive file created but remains empty (800 bytes - header only)
+- No error messages or warnings
+- Simulations appear to start but never complete
+
+### Root Cause
+
+Multiple compounding issues:
+
+1. **`GetVplanetHelp()` called inside worker loop** (line 214)
+   - Called on every iteration while holding the lock
+   - Spawns subprocess `vplanet -H` from within multiprocessing context
+   - Can cause file descriptor issues or deadlocks
+
+2. **`data = {}` reinitialized on every loop** (line 213)
+   - BigPlanet data accumulation broken
+   - Each iteration loses previous simulation data
+
+3. **HDF5 file opened in multiprocessing context** (line 272)
+   - Multiple processes writing to same HDF5 file
+   - HDF5 is not fully multiprocessing-safe despite locks
+   - Can deadlock on file operations
+
+4. **Lock held during expensive operations**
+   - GetVplanetHelp() takes ~0.6 seconds
+   - Blocks all other workers unnecessarily
+
+### Evidence
+
+```bash
+# Process listing showed zombie vplanet processes
+$ ps aux | grep vplanet
+python /usr/bin/vplanet vpl.in    # State: UE (uninterruptible sleep)
+
+# Empty HDF5 archive created
+$ ls -l MP_Bigplanet.bpa
+-rw-r--r-- 800 bytes  # Header only, no data
+
+# Test hung indefinitely
+$ pytest tests/Bigplanet/test_bigplanet.py
+# Running for 12+ hours...
+```
+
+### Impact
+
+- **Cannot test BigPlanet integration** in multiplanet
+- **Cannot use multiplanet -bp flag** reliably in production
+- Test suite cannot validate BigPlanet archive creation
+- Silent hang makes debugging difficult (no error message)
+
+### Temporary Workaround
+
+Disabled `-bp` flag in test_bigplanet.py:
+```python
+# OLD (hangs):
+subprocess.check_output(["multiplanet", "vspace.in", "-bp"], cwd=path)
+
+# NEW (works):
+subprocess.check_output(["multiplanet", "vspace.in"], cwd=path)
+# TODO: Re-enable after fixing multiprocessing architecture
+```
+
+### Recommended Fix (Sprint 4)
+
+**Option 1: Single-threaded BigPlanet Archive Creation (Safest)**
+```python
+def fnRunParallel(...):
+    # Run simulations in parallel WITHOUT BigPlanet
+    fnExecuteWorkers(listWorkers, bVerbose)
+
+    # Create BigPlanet archive in main process AFTER all sims complete
+    if bBigplanet:
+        fnCreateBigplanetArchive(sFolder, sSystemName, listBodies, ...)
+```
+
+**Benefits:**
+- No multiprocessing + HDF5 conflicts
+- Simpler, more reliable
+- GetVplanetHelp() called only once
+
+**Drawback:**
+- BigPlanet archive created after all sims complete (slower)
+- But safer and actually works!
+
+**Option 2: Process-Safe Queue (More Complex)**
+```python
+# Use multiprocessing.Manager() to create shared queue
+manager = mp.Manager()
+queue = manager.Queue()
+
+# Workers add simulation paths to queue
+def fnParallelWorker(...):
+    # After simulation completes
+    if bBigplanet:
+        queue.put(sSimFolder)
+
+# Dedicated BigPlanet writer process
+def fnBigplanetWriter(queue, sH5File, ...):
+    vplanet_help = GetVplanetHelp()  # Called once
+    with h5py.File(sH5File, 'w') as Master:
+        while True:
+            sSimFolder = queue.get()
+            if sSimFolder is None:  # Poison pill
+                break
+            # Process folder and write to HDF5
+```
+
+**Benefits:**
+- Archive built concurrently with simulations
+- Single HDF5 writer (no conflicts)
+
+**Drawback:**
+- More complex architecture
+- Requires significant refactoring
+
+### Testing Status
+
+**NOT YET FIXED** - BigPlanet integration test disabled to allow test suite to complete
+
+### Related Issues
+
+- Bug #2 (subprocess return code) - Need to fix together
+- General multiprocessing architecture needs redesign
+
+---
+
+## Critical #2: Incorrect Subprocess Return Code Handling
 
 **Location:** [multiplanet/multiplanet.py:250-264](multiplanet/multiplanet.py:250-264)
 
