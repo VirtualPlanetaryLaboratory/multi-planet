@@ -6,36 +6,41 @@ This document describes how to run the test suite for MultiPlanet.
 
 ### VPLanet Version Requirement
 
-**CRITICAL**: The test suite requires **vplanet v3.0** from the private repository, NOT the public release.
+The test suite works with **vplanet v2.5+** (public release from PyPI).
 
-- **Required executable**: `/Users/rory/src/vplanet-private/bin/vplanet` (branch: v3.0)
-- **Will NOT work with**: Public vplanet in anaconda (`/Users/rory/opt/anaconda3/bin/vplanet`)
+**Installation:**
+```bash
+pip install vplanet vspace bigplanet
+```
 
-The v3.0 tests use the `dTCore` input parameter and request `TCMB` and `TCore` as output parameters, which are only fully supported in the private v3.0 branch.
+**Compatibility:**
+- ✅ Works with public vplanet v2.5+ (PyPI)
+- ✅ Also works with vplanet v3.0 (private development branch)
+- ✅ Tests use `dTCore` input parameter (compatible with all versions)
+- ✅ Tests request `TCMB` and `TCore` output parameters (compatible with all versions)
 
 ### Python Dependencies
 
 ```bash
-pip install pytest
+pip install pytest pytest-cov pytest-timeout
 ```
 
 ## Running Tests
 
 ### Quick Start
 
-To run all tests with the correct vplanet executable:
+To run all tests:
 
 ```bash
-export PATH="/Users/rory/src/vplanet-private/bin:$PATH"
 cd /Users/rory/src/multi-planet
 python -m pytest tests/ -v
 ```
 
+**Note:** Tests will automatically use the vplanet executable in your PATH (typically from `pip install vplanet`).
+
 ### Run Individual Tests
 
 ```bash
-export PATH="/Users/rory/src/vplanet-private/bin:$PATH"
-
 # Serial execution test
 python -m pytest tests/Serial/test_serial.py -v
 
@@ -82,52 +87,42 @@ All tests verify that simulation output files are created:
 
 ## Known Issues
 
-### BigPlanet Integration Test (DISABLED)
+### BigPlanet Integration Test ✅ WORKING
 
-The `test_bigplanet.py` test currently runs multiplanet **without** the `-bp` flag due to a critical deadlock issue:
+The `test_bigplanet.py` test runs multiplanet **with** the `-bp` flag successfully:
 
-- **Issue**: `multiplanet -bp` hangs indefinitely due to multiprocessing + HDF5 conflicts
-- **Documented in**: [BUGS.md](BUGS.md) (Critical Bug #1)
-- **Current workaround**: Test runs simulations but skips BigPlanet archive creation
-- **TODO**: Re-enable after fixing multiprocessing architecture (Sprint 4)
+- **Status**: ✅ WORKING - Deadlock issue fixed (December 2025)
+- **Fix**: Adopted BigPlanet's architecture (see [BUGS.md](BUGS.md))
+- **Verification**: Creates 2.0 MB HDF5 archive with simulation data
+- **Runtime**: ~16 seconds for 3 simulations
 
 ## Troubleshooting
 
-### All Tests Fail with "Missing output file"
+### VPLanet Not Found
 
-**Cause**: Using wrong vplanet executable (public vs private v3.0)
+**Cause**: vplanet not installed
 
 **Solution**:
 ```bash
-# Check which vplanet is being used
-which vplanet
-
-# Should show: /Users/rory/src/vplanet-private/bin/vplanet
-# If not, set PATH correctly:
-export PATH="/Users/rory/src/vplanet-private/bin:$PATH"
+pip install vplanet
 ```
 
-### Tests Fail with "ERROR: Unrecognized option 'dTCMB'"
+### Tests Fail with "Missing output file"
 
-**Cause**: Input files have incorrect parameter name
+**Cause**: vplanet simulation failed
 
-**Solution**: Input parameter should be `dTCore`, not `dTCMB` or `TCMB`:
-```
-# Correct (in earth.in line 37):
-dTCore         6000
-
-# Wrong:
-dTCMB         6000
-TCMB         6000
+**Solution**: Check vplanet_log in the simulation folder:
+```bash
+cat tests/Serial/MP_Serial/semi_a0/vplanet_log
 ```
 
-### Parameter Name Clarification
+### Parameter Name Reference
 
-In vplanet v3.0:
+In vplanet v2.5+ and v3.0:
 - **Input parameter**: `dTCore` (Initial Core Temperature)
-- **Output parameters**: Both `TCMB` (CMB Temperature) and `TCore` (Core Temperature) are available
+- **Output parameters**: Both `TCMB` (CMB Temperature) and `TCore` (Core Temperature)
 
-The output parameter name changed from `TCore` to `TCMB`, but the **input** parameter remains `dTCore`.
+The test files use compatible parameter names that work with all vplanet versions v2.5+.
 
 ## Test Restoration History
 
