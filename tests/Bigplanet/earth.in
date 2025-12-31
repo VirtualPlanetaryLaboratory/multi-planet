@@ -34,7 +34,7 @@ d238UPowerCrust	  -1
 
 ### THERMINT inputs.
 dTMan          3000
-dTCMB         6000
+dTCore         6000
 #dViscJumpMan     2.40
 
 saOutputOrder -Time -TMan -TUMan -TLMan -TCMB -TCore $
