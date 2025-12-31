@@ -1,36 +1,52 @@
 # Test Infrastructure Status Report
 
-**Date:** 2025-12-28  
-**Branch:** test-infrastructure-restoration  
-**Status:** ✅ INFRASTRUCTURE RESTORED AND VALIDATED
+**Date:** 2025-12-31
+**Branch:** test-infrastructure-restoration
+**Status:** ✅ INFRASTRUCTURE RESTORED AND VALIDATED - ALL TESTS PASSING
 
 ---
 
 ## Summary
 
-The multiplanet test infrastructure has been successfully restored after being disabled since commit 6943a5c. All 5 test modules are now re-enabled with improved code quality.
+The multiplanet test infrastructure has been successfully restored after being disabled since commit 6943a5c. All 5 test modules are now re-enabled with improved code quality and passing with vplanet v3.0.
 
 ## Root Cause Analysis
 
-**Initial Hypothesis:** BigPlanet API compatibility issues  
-**Actual Cause:** Outdated vplanet parameter names in test input files
+**Initial Hypothesis:** BigPlanet API compatibility issues
+**Actual Cause:** Vplanet version mismatch and parameter naming confusion
 
-The vplanet thermint module changed the parameter name from `dTCore` to `dTCMB` (Core-Mantle Boundary temperature). Test input files were not updated, causing:
-```
-ERROR: Unrecognized option "dTCore" in earth.in
-```
+### Discovery Process
 
-All simulations failed immediately, leading to test suite being disabled.
+1. **First Discovery (2025-12-28)**: Tests were disabled, initial investigation assumed BigPlanet API changes
+2. **Second Discovery (2025-12-28)**: Found actual cause was outdated parameter name `dTCore` → initially thought it should be `dTCMB`
+3. **Third Discovery (2025-12-31)**: Realized `dTCMB` was incorrect; the confusion was between INPUT vs OUTPUT parameters
+4. **Final Resolution (2025-12-31)**: Correct parameter is `dTCore` for input; `TCMB` is only an output parameter in v3.0
+
+### Parameter Name Clarification
+
+In **vplanet v3.0**:
+- **INPUT parameter**: `dTCore` (Initial Core Temperature) - unchanged from previous versions
+- **OUTPUT parameters**: `TCMB` (CMB Temperature) and `TCore` (Core Temperature) - both available
+
+The OUTPUT parameter name evolved from `TCore` to `TCMB`, but the INPUT parameter remains `dTCore`.
+
+### VPLanet Version Requirement
+
+Tests require **vplanet-private v3.0** located at `/Users/rory/src/vplanet-private/bin/vplanet`.
+
+The public anaconda vplanet at `/Users/rory/opt/anaconda3/bin/vplanet` does not support the test configurations.
 
 ## Changes Made
 
 ### 1. Test Input Files (5 files updated)
 ```
-tests/Bigplanet/earth.in:37    dTCore  → dTCMB
-tests/Checkpoint/earth.in:37   dTCore  → dTCMB  
-tests/MpStatus/earth.in:37     dTCore  → dTCMB
-tests/Parallel/earth.in:37     dTCore  → dTCMB
-tests/Serial/earth.in:37       dTCore  → dTCMB
+tests/Bigplanet/earth.in:37    INPUT: dTCore 6000  (unchanged - always correct)
+tests/Checkpoint/earth.in:37   INPUT: dTCore 6000  (unchanged - always correct)
+tests/MpStatus/earth.in:37     INPUT: dTCore 6000  (unchanged - always correct)
+tests/Parallel/earth.in:37     INPUT: dTCore 6000  (unchanged - always correct)
+tests/Serial/earth.in:37       INPUT: dTCore 6000  (unchanged - always correct)
+
+All files line 40:               OUTPUT: saOutputOrder ... -TCMB -TCore ...
 ```
 
 ### 2. Test Modules (5 files re-enabled)
