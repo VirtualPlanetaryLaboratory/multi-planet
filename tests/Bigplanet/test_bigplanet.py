@@ -34,7 +34,13 @@ def test_bigplanet():
         # Run multiplanet with BigPlanet integration (-bp flag)
         # FIXED: Adopted BigPlanet's architecture to resolve deadlock
         # GetVplanetHelp() now called once in main process, not in worker loop
-        subprocess.check_output(["multiplanet", "vspace.in", "-bp"], cwd=path, timeout=600)
+        result = subprocess.run(
+            ["multiplanet", "vspace.in", "-bp"],
+            cwd=path,
+            timeout=600,
+            capture_output=True,
+            text=True
+        )
 
         # Verify simulations completed
         folders = sorted([f.path for f in os.scandir(dir) if f.is_dir()])
@@ -46,7 +52,24 @@ def test_bigplanet():
 
         # Verify BigPlanet archive was created
         file = path / "MP_Bigplanet.bpa"
-        assert os.path.isfile(file) == True, "BigPlanet archive file not created"
+
+        # If archive doesn't exist, print debug info
+        if not os.path.isfile(file):
+            print(f"\nDEBUG: BigPlanet archive not created")
+            print(f"multiplanet stdout:\n{result.stdout}")
+            print(f"multiplanet stderr:\n{result.stderr}")
+            print(f"multiplanet return code: {result.returncode}")
+
+            # Check vplanet_log files for errors
+            for folder in folders:
+                vplanet_log = os.path.join(folder, "vplanet_log")
+                if os.path.isfile(vplanet_log):
+                    with open(vplanet_log, 'r') as f:
+                        log_content = f.read()
+                        if log_content:
+                            print(f"\n{folder}/vplanet_log:\n{log_content}")
+
+            assert False, "BigPlanet archive file not created - see debug output above"
 
         # Verify archive is not empty (more than just header)
         assert file.stat().st_size > 1000, f"BigPlanet archive is too small ({file.stat().st_size} bytes)"

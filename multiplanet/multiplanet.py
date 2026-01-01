@@ -350,35 +350,43 @@ def par_worker(
 
         # STEP 3: Process BigPlanet data if needed (NO LOCK - CPU-bound work)
         if return_code == 0 and bigplanet and vplanet_help is not None:
-            # Gather simulation data
-            data = {}
-            data = GatherData(
-                data,
-                system_name,
-                body_list,
-                log_file,
-                in_files,
-                vplanet_help,
-                sFolder,
-                verbose,
-            )
-
-            # STEP 4: Write to HDF5 (WITH LOCK - minimal critical section)
-            lock.acquire()
             try:
-                with h5py.File(h5_file, "a") as Master:
-                    group_name = os.path.basename(sFolder)
-                    if group_name not in Master:
-                        DictToBP(
-                            data,
-                            vplanet_help,
-                            Master,
-                            verbose,
-                            group_name,
-                            archive=True,
-                        )
-            finally:
-                lock.release()
+                # Gather simulation data
+                data = {}
+                data = GatherData(
+                    data,
+                    system_name,
+                    body_list,
+                    log_file,
+                    in_files,
+                    vplanet_help,
+                    sFolder,
+                    verbose,
+                )
+
+                # STEP 4: Write to HDF5 (WITH LOCK - minimal critical section)
+                lock.acquire()
+                try:
+                    with h5py.File(h5_file, "a") as Master:
+                        group_name = os.path.basename(sFolder)
+                        if group_name not in Master:
+                            DictToBP(
+                                data,
+                                vplanet_help,
+                                Master,
+                                verbose,
+                                group_name,
+                                archive=True,
+                            )
+                finally:
+                    lock.release()
+            except Exception as e:
+                # Log BigPlanet errors but don't fail the simulation
+                if verbose:
+                    print(f"Warning: BigPlanet archive failed for {sFolder}: {e}")
+                # Write error to vplanet_log for debugging
+                with open(os.path.join(sFolder, "vplanet_log"), "a") as f:
+                    f.write(f"\nBigPlanet Error: {e}\n")
 
         # STEP 5: Update checkpoint (with lock)
         if return_code == 0:
