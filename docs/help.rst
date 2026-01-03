@@ -15,9 +15,9 @@ There are three optional arguments for :code:`MultiPlanet`:
 
 :code:`-q`: there will be no output in the command line
 
- :code:`-bp`: `BigPlanet`_ will be ran in conjunction with :code:`MultiPlanet`.
+:code:`-bp`: `BigPlanet`_ will be ran in conjunction with :code:`MultiPlanet`.
 
- .. BigPlanet: https://github.com/VirtualPlanetaryLaboratory/bigplanet
+.. _BigPlanet: https://github.com/VirtualPlanetaryLaboratory/bigplanet
 
 :code:`-m`: emails the users at :code:`email` when the simulations are complete
 
