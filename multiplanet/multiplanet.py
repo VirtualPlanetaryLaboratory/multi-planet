@@ -10,6 +10,134 @@ from bigplanet.read import GetVplanetHelp
 from bigplanet.process import DictToBP, GatherData
 
 # --------------------------------------------------------------------
+# HELPER FUNCTIONS (extracted from BigPlanet architecture)
+# --------------------------------------------------------------------
+
+
+def fnGetNextSimulation(sCheckpointFile, lockFile):
+    """
+    Find and mark the next simulation to process from checkpoint file.
+
+    Thread-safe with file locking. Reads checkpoint, finds first simulation
+    with status -1, marks it as 0 (in-progress), and returns the folder path.
+
+    Parameters
+    ----------
+    sCheckpointFile : str
+        Path to checkpoint file
+    lockFile : multiprocessing.Lock
+        Lock for thread-safe file access
+
+    Returns
+    -------
+    str or None
+        Absolute path to simulation folder, or None if all done
+    """
+    lockFile.acquire()
+    listData = []
+
+    with open(sCheckpointFile, "r") as f:
+        for sLine in f:
+            listData.append(sLine.strip().split())
+
+    sFolder = ""
+    for listLine in listData:
+        if len(listLine) > 1 and listLine[1] == "-1":
+            sFolder = listLine[0]
+            listLine[1] = "0"
+            break
+
+    if not sFolder:
+        lockFile.release()
+        return None
+
+    with open(sCheckpointFile, "w") as f:
+        for listLine in listData:
+            f.writelines(" ".join(listLine) + "\n")
+
+    lockFile.release()
+    return os.path.abspath(sFolder)
+
+
+def fnMarkSimulationComplete(sCheckpointFile, sFolder, lockFile):
+    """
+    Mark simulation as complete in checkpoint file.
+
+    Thread-safe with file locking. Updates status from 0 or -1 to 1.
+
+    Parameters
+    ----------
+    sCheckpointFile : str
+        Path to checkpoint file
+    sFolder : str
+        Folder path to mark as complete
+    lockFile : multiprocessing.Lock
+        Lock for thread-safe file access
+
+    Returns
+    -------
+    None
+    """
+    lockFile.acquire()
+    listData = []
+
+    with open(sCheckpointFile, "r") as f:
+        for sLine in f:
+            listData.append(sLine.strip().split())
+
+    for listLine in listData:
+        if len(listLine) > 1 and listLine[0] == sFolder:
+            listLine[1] = "1"
+            break
+
+    with open(sCheckpointFile, "w") as f:
+        for listLine in listData:
+            f.writelines(" ".join(listLine) + "\n")
+
+    lockFile.release()
+
+
+def fnMarkSimulationFailed(sCheckpointFile, sFolder, lockFile):
+    """
+    Mark simulation as failed in checkpoint file.
+
+    Thread-safe with file locking. Updates status back to -1 for retry.
+
+    Parameters
+    ----------
+    sCheckpointFile : str
+        Path to checkpoint file
+    sFolder : str
+        Folder path to mark as failed
+    lockFile : multiprocessing.Lock
+        Lock for thread-safe file access
+
+    Returns
+    -------
+    None
+    """
+    lockFile.acquire()
+    listData = []
+
+    with open(sCheckpointFile, "r") as f:
+        for sLine in f:
+            listData.append(sLine.strip().split())
+
+    for listLine in listData:
+        if len(listLine) > 1 and listLine[0] == sFolder:
+            listLine[1] = "-1"
+            break
+
+    with open(sCheckpointFile, "w") as f:
+        for listLine in listData:
+            f.writelines(" ".join(listLine) + "\n")
+
+    lockFile.release()
+
+
+# --------------------------------------------------------------------
+# ORIGINAL FUNCTIONS (unchanged)
+# --------------------------------------------------------------------
 
 
 def GetSNames(in_files, sims):
@@ -55,6 +183,7 @@ def GetDir(vspace_file):
     """Give it input file and returns name of folder where simulations are located."""
 
     infiles = []
+    folder_name = None
     # gets the folder name with all the sims
     with open(vspace_file, "r") as vpl:
         content = [line.strip().split() for line in vpl.readlines()]
@@ -86,8 +215,223 @@ def GetDir(vspace_file):
     return folder_name, infiles
 
 
-## parallel implementation of running vplanet over a directory ##
+def CreateCP(checkpoint_file, input_file, sims):
+    with open(checkpoint_file, "w") as cp:
+        cp.write("Vspace File: " + os.getcwd() + "/" + input_file + "\n")
+        cp.write("Total Number of Simulations: " + str(len(sims)) + "\n")
+        for f in range(len(sims)):
+            cp.write(sims[f] + " " + "-1 \n")
+        cp.write("THE END \n")
+
+
+def ReCreateCP(checkpoint_file, input_file, verbose, sims, folder_name, force):
+    if verbose:
+        print("WARNING: multi-planet checkpoint file already exists!")
+
+    datalist = []
+    with open(checkpoint_file, "r") as re:
+        for newline in re:
+            datalist.append(newline.strip().split())
+
+        for l in datalist:
+            if len(l) > 1 and l[1] == "0":
+                l[1] = "-1"
+        if datalist[-1] != ["THE", "END"]:
+            lest = datalist[-2][0]
+            idx = sims.index(lest)
+            for f in range(idx + 2, len(sims)):
+                datalist.append([sims[f], "-1"])
+            datalist.append(["THE", "END"])
+
+    with open(checkpoint_file, "w") as wr:
+        for newline in datalist:
+            wr.writelines(" ".join(newline) + "\n")
+
+    if all(len(l) > 1 and l[1] == "1" for l in datalist[2:-2]) == True:
+        print("All simulations have been ran")
+
+        if force:
+            if verbose:
+                print("Deleting folder...")
+            os.remove(folder_name)
+            if verbose:
+                print("Deleting Checkpoint File...")
+            os.remove(checkpoint_file)
+            if verbose:
+                print("Recreating Checkpoint File...")
+            CreateCP(checkpoint_file, input_file, sims)
+        else:
+            exit()
+
+
+# --------------------------------------------------------------------
+# REFACTORED WORKER (adopting BigPlanet architecture)
+# --------------------------------------------------------------------
+
+
+def par_worker(
+    checkpoint_file,
+    system_name,
+    body_list,
+    log_file,
+    in_files,
+    verbose,
+    lock,
+    bigplanet,
+    h5_file,
+    vplanet_help,
+):
+    """
+    Worker process for running vplanet simulations.
+
+    REFACTORED to adopt BigPlanet's architecture:
+    - Uses fnGetNextSimulation() for thread-safe checkpoint access
+    - GetVplanetHelp() passed as parameter (called once in main)
+    - Minimal critical sections (lock held only during file I/O)
+    - Proper subprocess return code handling (wait() not poll())
+    - No os.chdir() calls (uses cwd parameter instead)
+
+    Parameters
+    ----------
+    checkpoint_file : str
+        Path to checkpoint file
+    system_name : str
+        Name of system
+    body_list : list
+        List of body names
+    log_file : str
+        Name of log file
+    in_files : list
+        List of input files
+    verbose : bool
+        Verbose output flag
+    lock : multiprocessing.Lock
+        Lock for thread-safe operations
+    bigplanet : bool
+        Create BigPlanet archive
+    h5_file : str
+        Path to HDF5 archive file
+    vplanet_help : dict or None
+        Vplanet help data (pre-fetched in main process)
+
+    Returns
+    -------
+    None
+    """
+    while True:
+        # STEP 1: Get next simulation (with lock - minimal critical section)
+        sFolder = fnGetNextSimulation(checkpoint_file, lock)
+        if sFolder is None:
+            return  # No more work
+
+        if verbose:
+            print(f"Processing: {sFolder}")
+
+        # STEP 2: Run vplanet simulation (NO LOCK - independent work)
+        vplanet_log_path = os.path.join(sFolder, "vplanet_log")
+
+        with open(vplanet_log_path, "a+") as vplf:
+            vplanet = sub.Popen(
+                ["vplanet", "vpl.in"],
+                cwd=sFolder,
+                stdout=sub.PIPE,
+                stderr=sub.PIPE,
+                universal_newlines=True,
+            )
+            # FIXED: Use communicate() to wait for completion and get output
+            stdout, stderr = vplanet.communicate()
+
+            # Write output to log
+            vplf.write(stderr)
+            vplf.write(stdout)
+
+        # FIXED: Check actual return code (not poll())
+        return_code = vplanet.returncode
+
+        # STEP 3: Process BigPlanet data if needed (NO LOCK - CPU-bound work)
+        if return_code == 0 and bigplanet and vplanet_help is not None:
+            try:
+                # Gather simulation data
+                data = {}
+                data = GatherData(
+                    data,
+                    system_name,
+                    body_list,
+                    log_file,
+                    in_files,
+                    vplanet_help,
+                    sFolder,
+                    verbose,
+                )
+
+                # STEP 4: Write to HDF5 (WITH LOCK - minimal critical section)
+                lock.acquire()
+                try:
+                    with h5py.File(h5_file, "a") as Master:
+                        group_name = os.path.basename(sFolder)
+                        if group_name not in Master:
+                            DictToBP(
+                                data,
+                                vplanet_help,
+                                Master,
+                                verbose,
+                                group_name,
+                                archive=True,
+                            )
+                finally:
+                    lock.release()
+            except Exception as e:
+                # Log BigPlanet errors but don't fail the simulation
+                if verbose:
+                    print(f"Warning: BigPlanet archive failed for {sFolder}: {e}")
+                # Write error to vplanet_log for debugging
+                with open(os.path.join(sFolder, "vplanet_log"), "a") as f:
+                    f.write(f"\nBigPlanet Error: {e}\n")
+
+        # STEP 5: Update checkpoint (with lock)
+        if return_code == 0:
+            fnMarkSimulationComplete(checkpoint_file, sFolder, lock)
+            if verbose:
+                print(f"{sFolder} completed")
+        else:
+            fnMarkSimulationFailed(checkpoint_file, sFolder, lock)
+            if verbose:
+                print(f"{sFolder} failed with return code {return_code}")
+
+
+# --------------------------------------------------------------------
+# REFACTORED MAIN FUNCTION
+# --------------------------------------------------------------------
+
+
 def parallel_run_planet(input_file, cores, quiet, verbose, bigplanet, force):
+    """
+    Run vplanet simulations in parallel.
+
+    REFACTORED to fix BigPlanet deadlock:
+    - GetVplanetHelp() called ONCE in main process (not in workers)
+    - Passed to workers as immutable parameter
+    - No subprocess calls within multiprocessing context
+
+    Parameters
+    ----------
+    input_file : str
+        Vspace input file
+    cores : int
+        Number of CPU cores to use
+    quiet : bool
+        Suppress output
+    verbose : bool
+        Verbose output
+    bigplanet : bool
+        Create BigPlanet HDF5 archive
+    force : bool
+        Force rerun if already completed
+
+    Returns
+    -------
+    None
+    """
     # gets the folder name with all the sims
     folder_name, in_files = GetDir(input_file)
     # gets the list of sims
@@ -113,7 +457,15 @@ def parallel_run_planet(input_file, cores, quiet, verbose, bigplanet, force):
     workers = []
 
     master_hdf5_file = os.getcwd() + "/" + folder_name + ".bpa"
-    # with h5py.File(master_hdf5_file, "w") as Master:
+
+    # CRITICAL FIX: Call GetVplanetHelp() ONCE in main process
+    # This is passed to workers instead of being called inside worker loop
+    if bigplanet:
+        vplanet_help = GetVplanetHelp()
+    else:
+        vplanet_help = None
+
+    # Spawn worker processes
     for i in range(cores):
         workers.append(
             mp.Process(
@@ -128,183 +480,25 @@ def parallel_run_planet(input_file, cores, quiet, verbose, bigplanet, force):
                     lock,
                     bigplanet,
                     master_hdf5_file,
+                    vplanet_help,  # PASSED as parameter
                 ),
             )
         )
+
+    # Start all workers
     for w in workers:
-        print("Starting worker")
+        if verbose:
+            print("Starting worker")
         w.start()
-    
+
+    # Wait for all workers to complete
     for w in workers:
         w.join()
 
+    # Clean up HDF5 file if not using bigplanet
     if bigplanet == False:
         if os.path.isfile(master_hdf5_file) == True:
             sub.run(["rm", master_hdf5_file])
-
-
-def CreateCP(checkpoint_file, input_file, sims):
-    with open(checkpoint_file, "w") as cp:
-        cp.write("Vspace File: " + os.getcwd() + "/" + input_file + "\n")
-        cp.write("Total Number of Simulations: " + str(len(sims)) + "\n")
-        for f in range(len(sims)):
-            cp.write(sims[f] + " " + "-1 \n")
-        cp.write("THE END \n")
-
-
-def ReCreateCP(checkpoint_file, input_file, verbose, sims, folder_name, force):
-    if verbose:
-        print("WARNING: multi-planet checkpoint file already exists!")
-
-    datalist = []
-    with open(checkpoint_file, "r") as re:
-        for newline in re:
-            datalist.append(newline.strip().split())
-
-        for l in datalist:
-            if l[1] == "0":
-                l[1] = "-1"
-        if datalist[-1] != ["THE", "END"]:
-            lest = datalist[-2][0]
-            idx = sims.index(lest)
-            for f in range(idx + 2, len(sims)):
-                datalist.append([sims[f], "-1"])
-            datalist.append(["THE", "END"])
-
-    with open(checkpoint_file, "w") as wr:
-        for newline in datalist:
-            wr.writelines(" ".join(newline) + "\n")
-
-    if all(l[1] == "1" for l in datalist[2:-2]) == True:
-        print("All simulations have been ran")
-
-        if force:
-            if verbose:
-                print("Deleting folder...")
-            os.remove(folder_name)
-            if verbose:
-                print("Deleting Checkpoint File...")
-            os.remove(checkpoint_file)
-            if verbose:
-                print("Recreating Checkpoint File...")
-            CreateCP(checkpoint_file, input_file, sims)
-        else:
-            exit()
-
-
-## parallel worker to run vplanet ##
-def par_worker(
-    checkpoint_file,
-    system_name,
-    body_list,
-    log_file,
-    in_files,
-    verbose,
-    lock,
-    bigplanet,
-    h5_file,
-):
-
-    while True:
-
-        lock.acquire()
-        datalist = []
-        if bigplanet == True:
-            data = {}
-            vplanet_help = GetVplanetHelp()
-
-        with open(checkpoint_file, "r") as f:
-            for newline in f:
-                datalist.append(newline.strip().split())
-
-        folder = ""
-
-        for l in datalist:
-            if l[1] == "-1":
-                folder = l[0]
-                l[1] = "0"
-                break
-        if not folder:
-            lock.release()
-            return
-
-        with open(checkpoint_file, "w") as f:
-            for newline in datalist:
-                f.writelines(" ".join(newline) + "\n")
-
-        lock.release()
-
-        if verbose:
-            print(folder)
-        os.chdir(folder)
-
-        # runs vplanet on folder and writes the output to the log file
-        with open("vplanet_log", "a+") as vplf:
-            vplanet = sub.Popen(
-                "vplanet vpl.in",
-                shell=True,
-                stdout=sub.PIPE,
-                stderr=sub.PIPE,
-                universal_newlines=True,
-            )
-            return_code = vplanet.poll()
-            for line in vplanet.stderr:
-                vplf.write(line)
-
-            for line in vplanet.stdout:
-                vplf.write(line)
-
-        lock.acquire()
-        datalist = []
-
-        with open(checkpoint_file, "r") as f:
-            for newline in f:
-                datalist.append(newline.strip().split())
-
-        if return_code is None:
-            for l in datalist:
-                if l[0] == folder:
-                    l[1] = "1"
-                    break
-            if verbose:
-                print(folder, "completed")
-            if bigplanet == True:
-                with h5py.File(h5_file, "a") as Master:
-                    group_name = folder.split("/")[-1]
-                    if group_name not in Master:
-                        data = GatherData(
-                            data,
-                            system_name,
-                            body_list,
-                            log_file,
-                            in_files,
-                            vplanet_help,
-                            folder,
-                            verbose,
-                        )
-                        DictToBP(
-                            data,
-                            vplanet_help,
-                            Master,
-                            verbose,
-                            group_name,
-                            archive=True,
-                        )
-        else:
-            for l in datalist:
-                if l[0] == folder:
-                    l[1] = "-1"
-                    break
-            if verbose:
-                print(folder, "failed")
-
-        with open(checkpoint_file, "w") as f:
-            for newline in datalist:
-                f.writelines(" ".join(newline) + "\n")
-
-        lock.release()
-
-        os.chdir("../../")
 
 
 def Arguments():

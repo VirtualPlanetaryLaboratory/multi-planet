@@ -1,0 +1,21 @@
+[run]
+# Coverage configuration for multiplanet
+source = multiplanet
+
+# Multiplanet uses a hybrid testing strategy:
+# 1. Unit tests (tests/unit/) - Import modules directly for code coverage
+# 2. Integration tests (tests/*/) - Call CLI via subprocess for end-to-end validation
+#
+# Unit tests provide code coverage metrics by importing multiplanet.multiplanet
+# and multiplanet.mpstatus modules directly. Integration tests validate the
+# user-facing CLI interface by calling multiplanet/mpstatus as subprocess commands.
+#
+# This approach combines the best of both worlds: measurable coverage from unit
+# tests and real-world validation from integration tests.
+
+[report]
+precision = 2
+show_missing = True
+
+[html]
+directory = htmlcov

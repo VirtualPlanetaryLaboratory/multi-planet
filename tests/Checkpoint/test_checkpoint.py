@@ -31,14 +31,12 @@ def test_checkpoint():
 
         # Run multi-planet
         subprocess.check_output(["multiplanet", "vspace.in"], cwd=path)
-        
+
         # Gets list of folders
         folders = sorted([f.path for f in os.scandir(dir) if f.is_dir()])
 
         for i in range(len(folders)):
-            os.chdir(folders[i])
-            assert os.path.isfile('earth.earth.forward') == True
-            os.chdir('../')
+            assert os.path.isfile(os.path.join(folders[i], 'earth.earth.forward')) == True
 
 if __name__ == "__main__":
     test_checkpoint()
