@@ -13,16 +13,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Per user requirements: debugging matrix set to ubuntu-22.04 and 3.9
-        os: [ubuntu-22.04]
-        python-version: ["3.9"]
-        # Full matrix for production (commented out for debugging):
-        # os: [ubuntu-22.04, ubuntu-24.04, macos-15-intel, macos-latest]
-        # python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
-        # exclude:
-        #   # macOS latest doesn't support Python 3.9 well on ARM
-        #   - os: macos-latest
-        #     python-version: "3.9"
+        os: [ubuntu-22.04, ubuntu-24.04, macos-15-intel, macos-26]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - uses: actions/checkout@v5
