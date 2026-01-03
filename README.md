@@ -21,7 +21,10 @@
   <a href="https://github.com/VirtualPlanetaryLaboratory/multi-planet//actions/workflows/tests.yml">
     <img src="https://github.com/VirtualPlanetaryLaboratory/multi-planet//actions/workflows/tests.yml/badge.svg"/>
   </a>
-  <img src="https://img.shields.io/badge/Python-3.9--3.14-orange.svg"/><br>
+  <img src="https://img.shields.io/badge/Python-3.9--3.14-orange.svg"/>
+  <a href="https://codecov.io/github/VirtualPlanetaryLaboratory/multi-planet" > 
+ <img src="https://codecov.io/github/VirtualPlanetaryLaboratory/multi-planet/graph/badge.svg?token=8112ATOQ0Z"/></a>
+  <br>
   <a href="https://github.com/VirtualPlanetaryLaboratory/multi-planet//actions/workflows/pip-install.yml">
     <img src="https://github.com/VirtualPlanetaryLaboratory/multi-planet//actions/workflows/pip-install.yml/badge.svg"/>
   </a>
