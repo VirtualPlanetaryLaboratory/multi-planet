@@ -38,12 +38,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # Install BigPlanet from GitHub first (development version with VPLanet v2.0 compatibility)
-          python -m pip install git+https://github.com/VirtualPlanetaryLaboratory/bigplanet.git@main#egg=bigplanet
-          # Install public releases from PyPI (vplanet will skip bigplanet since already installed)
-          python -m pip install vplanet vspace --no-deps
-          # Install vplanet/vspace dependencies that were skipped
-          python -m pip install astropy numpy tqdm
+          # Install public releases from PyPI
+          # BigPlanet v3.1.2+ includes all compatibility fixes
+          python -m pip install vplanet vspace bigplanet
 
       - name: Install multiplanet
         run: |
