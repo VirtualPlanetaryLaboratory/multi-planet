@@ -1,5 +1,5 @@
 MultiPlanet Documentation
-=======
+==========================
 
 ``multi-planet`` manages the exectution of a suite of `VPLanet <https://github.com/VirtualPlanetaryLaboratory/multi-planet>`_
 simulations that were built with `VSPACE <https://github.com/VirtualPlanetaryLaboratory/vspace>`_.
