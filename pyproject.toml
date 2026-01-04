@@ -22,3 +22,21 @@ exclude = '''
   | dist
 )/
 '''
+
+[tool.coverage.run]
+source = ["multiplanet"]
+omit = [
+    "multiplanet/multiplanet_refactored.py",
+    "*/tests/*",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
