@@ -16,7 +16,7 @@
     <img src="https://img.shields.io/badge/license-MIT-purple.svg">
   </a>
   <a href="https://VirtualPlanetaryLaboratory.github.io/vplanet/conduct.html"><img src="https://img.shields.io/badge/Code%20of-Conduct-7d93c7.svg"></a><br>
-  <img src="https://img.shields.io/badge/Unit%20Tests-10-darkblue.svg">
+  <img src="https://img.shields.io/badge/Unit%20Tests-39-darkblue.svg">
   </a>
   <a href="https://github.com/VirtualPlanetaryLaboratory/multi-planet//actions/workflows/tests.yml">
     <img src="https://github.com/VirtualPlanetaryLaboratory/multi-planet//actions/workflows/tests.yml/badge.svg"/>
