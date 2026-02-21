@@ -1,6 +1,7 @@
 import argparse
 import multiprocessing as mp
 import os
+import shutil
 import subprocess as sub
 import sys
 
@@ -33,30 +34,27 @@ def fnGetNextSimulation(sCheckpointFile, lockFile):
     str or None
         Absolute path to simulation folder, or None if all done
     """
-    lockFile.acquire()
-    listData = []
+    with lockFile:
+        listData = []
+        with open(sCheckpointFile, "r") as f:
+            for sLine in f:
+                listData.append(sLine.strip().split())
 
-    with open(sCheckpointFile, "r") as f:
-        for sLine in f:
-            listData.append(sLine.strip().split())
-
-    sFolder = ""
-    for listLine in listData:
-        if len(listLine) > 1 and listLine[1] == "-1":
-            sFolder = listLine[0]
-            listLine[1] = "0"
-            break
-
-    if not sFolder:
-        lockFile.release()
-        return None
-
-    with open(sCheckpointFile, "w") as f:
+        sFolder = ""
         for listLine in listData:
-            f.writelines(" ".join(listLine) + "\n")
+            if len(listLine) > 1 and listLine[1] == "-1":
+                sFolder = listLine[0]
+                listLine[1] = "0"
+                break
 
-    lockFile.release()
-    return os.path.abspath(sFolder)
+        if not sFolder:
+            return None
+
+        with open(sCheckpointFile, "w") as f:
+            for listLine in listData:
+                f.writelines(" ".join(listLine) + "\n")
+
+        return os.path.abspath(sFolder)
 
 
 def fnMarkSimulationComplete(sCheckpointFile, sFolder, lockFile):
@@ -78,23 +76,20 @@ def fnMarkSimulationComplete(sCheckpointFile, sFolder, lockFile):
     -------
     None
     """
-    lockFile.acquire()
-    listData = []
+    with lockFile:
+        listData = []
+        with open(sCheckpointFile, "r") as f:
+            for sLine in f:
+                listData.append(sLine.strip().split())
 
-    with open(sCheckpointFile, "r") as f:
-        for sLine in f:
-            listData.append(sLine.strip().split())
-
-    for listLine in listData:
-        if len(listLine) > 1 and listLine[0] == sFolder:
-            listLine[1] = "1"
-            break
-
-    with open(sCheckpointFile, "w") as f:
         for listLine in listData:
-            f.writelines(" ".join(listLine) + "\n")
+            if len(listLine) > 1 and listLine[0] == sFolder:
+                listLine[1] = "1"
+                break
 
-    lockFile.release()
+        with open(sCheckpointFile, "w") as f:
+            for listLine in listData:
+                f.writelines(" ".join(listLine) + "\n")
 
 
 def fnMarkSimulationFailed(sCheckpointFile, sFolder, lockFile):
@@ -116,23 +111,20 @@ def fnMarkSimulationFailed(sCheckpointFile, sFolder, lockFile):
     -------
     None
     """
-    lockFile.acquire()
-    listData = []
+    with lockFile:
+        listData = []
+        with open(sCheckpointFile, "r") as f:
+            for sLine in f:
+                listData.append(sLine.strip().split())
 
-    with open(sCheckpointFile, "r") as f:
-        for sLine in f:
-            listData.append(sLine.strip().split())
-
-    for listLine in listData:
-        if len(listLine) > 1 and listLine[0] == sFolder:
-            listLine[1] = "-1"
-            break
-
-    with open(sCheckpointFile, "w") as f:
         for listLine in listData:
-            f.writelines(" ".join(listLine) + "\n")
+            if len(listLine) > 1 and listLine[0] == sFolder:
+                listLine[1] = "-1"
+                break
 
-    lockFile.release()
+        with open(sCheckpointFile, "w") as f:
+            for listLine in listData:
+                f.writelines(" ".join(listLine) + "\n")
 
 
 # --------------------------------------------------------------------
@@ -247,13 +239,13 @@ def ReCreateCP(checkpoint_file, input_file, verbose, sims, folder_name, force):
         for newline in datalist:
             wr.writelines(" ".join(newline) + "\n")
 
-    if all(len(l) > 1 and l[1] == "1" for l in datalist[2:-2]) == True:
+    if all(len(l) > 1 and l[1] == "1" for l in datalist[2:-1]) == True:
         print("All simulations have been ran")
 
         if force:
             if verbose:
                 print("Deleting folder...")
-            os.remove(folder_name)
+            shutil.rmtree(folder_name)
             if verbose:
                 print("Deleting Checkpoint File...")
             os.remove(checkpoint_file)
@@ -337,6 +329,7 @@ def par_worker(
                 stdout=sub.PIPE,
                 stderr=sub.PIPE,
                 universal_newlines=True,
+                close_fds=True,
             )
             # FIXED: Use communicate() to wait for completion and get output
             stdout, stderr = vplanet.communicate()
@@ -365,8 +358,7 @@ def par_worker(
                 )
 
                 # STEP 4: Write to HDF5 (WITH LOCK - minimal critical section)
-                lock.acquire()
-                try:
+                with lock:
                     with h5py.File(h5_file, "a") as Master:
                         group_name = os.path.basename(sFolder)
                         if group_name not in Master:
@@ -378,8 +370,6 @@ def par_worker(
                                 group_name,
                                 archive=True,
                             )
-                finally:
-                    lock.release()
             except Exception as e:
                 # Log BigPlanet errors but don't fail the simulation
                 if verbose:
@@ -442,6 +432,7 @@ def parallel_run_planet(input_file, cores, quiet, verbose, bigplanet, force):
     logfile = system_name + ".log"
     # initalizes the checkpoint file
     checkpoint_file = os.getcwd() + "/" + "." + folder_name
+    os.makedirs(os.path.dirname(checkpoint_file), exist_ok=True)
     # checks if the files doesn't exist and if so then it creates it
     if os.path.isfile(checkpoint_file) == False:
         CreateCP(checkpoint_file, input_file, sims)
