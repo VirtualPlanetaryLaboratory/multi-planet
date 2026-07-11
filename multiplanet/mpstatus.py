@@ -39,6 +39,23 @@ def mpstatus(input_file):
         print("Number of Simulations in progress: " + str(count_ip))
         print("Number of Simulations remaining: " + str(count_todo))
 
+    return fiWarnIfIncomplete(count_done, count_ip, count_todo)
+
+
+def fiWarnIfIncomplete(count_done, count_ip, count_todo):
+    """Warn and return non-zero if any simulation has not finished."""
+    count_incomplete = count_ip + count_todo
+    if count_incomplete > 0:
+        count_total = count_done + count_incomplete
+        print(
+            "WARNING: %d of %d simulations have not completed; if the run has "
+            "finished this indicates sims were killed (e.g. under core "
+            "oversubscription) and results may be biased -- re-run with fewer "
+            "cores." % (count_incomplete, count_total)
+        )
+        return 1
+    return 0
+
 
 def Arguments():
     parser = argparse.ArgumentParser(
@@ -47,4 +64,6 @@ def Arguments():
     parser.add_argument("InputFile", help="name of the vspace file")
     args = parser.parse_args()
 
-    mpstatus(args.InputFile)
+    iExitCode = mpstatus(args.InputFile)
+    if iExitCode:
+        sys.exit(iExitCode)

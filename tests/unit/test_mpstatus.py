@@ -147,6 +147,7 @@ class TestMpstatusArguments:
             with mock.patch('sys.argv', ['mpstatus', str(vspace_file)]):
                 # Mock mpstatus function to verify it's called
                 with mock.patch('multiplanet.mpstatus.mpstatus') as mock_mpstatus:
+                    mock_mpstatus.return_value = 0
                     mpstatus.Arguments()
                     mock_mpstatus.assert_called_once_with(str(vspace_file))
         finally:

@@ -337,6 +337,7 @@ class TestArguments:
             with mock.patch('sys.argv', ['multiplanet', vspace_file]):
                 with mock.patch('subprocess.getoutput', return_value="vplanet help"):
                     with mock.patch('multiplanet.multiplanet.parallel_run_planet') as mock_run:
+                        mock_run.return_value = 0
                         multiplanet.Arguments()
 
                         # Verify parallel_run_planet was called
@@ -357,6 +358,7 @@ class TestArguments:
             with mock.patch('sys.argv', ['multiplanet', vspace_file, '-c', '4']):
                 with mock.patch('subprocess.getoutput', return_value="vplanet help"):
                     with mock.patch('multiplanet.multiplanet.parallel_run_planet') as mock_run:
+                        mock_run.return_value = 0
                         multiplanet.Arguments()
 
                         call_args = mock_run.call_args[0]
@@ -374,6 +376,7 @@ class TestArguments:
             with mock.patch('sys.argv', ['multiplanet', vspace_file, '-bp']):
                 with mock.patch('subprocess.getoutput', return_value="vplanet help"):
                     with mock.patch('multiplanet.multiplanet.parallel_run_planet') as mock_run:
+                        mock_run.return_value = 0
                         multiplanet.Arguments()
 
                         # bigplanet is the 5th argument (index 4)
@@ -392,6 +395,7 @@ class TestArguments:
             with mock.patch('sys.argv', ['multiplanet', vspace_file, '-f']):
                 with mock.patch('subprocess.getoutput', return_value="vplanet help"):
                     with mock.patch('multiplanet.multiplanet.parallel_run_planet') as mock_run:
+                        mock_run.return_value = 0
                         multiplanet.Arguments()
 
                         # force is the 6th argument (index 5)
@@ -410,6 +414,7 @@ class TestArguments:
             with mock.patch('sys.argv', ['multiplanet', vspace_file, '-q']):
                 with mock.patch('subprocess.getoutput', return_value="vplanet help"):
                     with mock.patch('multiplanet.multiplanet.parallel_run_planet') as mock_run:
+                        mock_run.return_value = 0
                         multiplanet.Arguments()
 
                         call_args = mock_run.call_args[0]
@@ -429,6 +434,7 @@ class TestArguments:
             with mock.patch('sys.argv', ['multiplanet', vspace_file, '-v']):
                 with mock.patch('subprocess.getoutput', return_value="vplanet help"):
                     with mock.patch('multiplanet.multiplanet.parallel_run_planet') as mock_run:
+                        mock_run.return_value = 0
                         multiplanet.Arguments()
 
                         call_args = mock_run.call_args[0]
@@ -448,7 +454,7 @@ class TestArguments:
             # Test successful vplanet check
             with mock.patch('sys.argv', ['multiplanet', vspace_file]):
                 with mock.patch('subprocess.getoutput', return_value="vplanet help"):
-                    with mock.patch('multiplanet.multiplanet.parallel_run_planet'):
+                    with mock.patch('multiplanet.multiplanet.parallel_run_planet', return_value=0):
                         # Should not raise exception
                         multiplanet.Arguments()
 

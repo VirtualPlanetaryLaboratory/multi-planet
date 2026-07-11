@@ -128,6 +128,108 @@ def fnMarkSimulationFailed(sCheckpointFile, sFolder, lockFile):
 
 
 # --------------------------------------------------------------------
+# ORPHANED-SIMULATION DETECTION AND RECOVERY
+# --------------------------------------------------------------------
+
+# Maximum number of times the pool is respawned to recover simulations
+# orphaned by workers that died (e.g. OOM/SIGKILL under core oversubscription).
+iMaxOrphanRetries = 3
+
+
+def fiCountIncompleteSimulations(sCheckpointFile):
+    """Count simulations that have not finished (status 0 or -1)."""
+    iIncomplete = 0
+    with open(sCheckpointFile, "r") as f:
+        for sLine in f:
+            listLine = sLine.strip().split()
+            if len(listLine) > 1 and listLine[1] in ("0", "-1"):
+                iIncomplete += 1
+    return iIncomplete
+
+
+def fiCountTotalSimulations(sCheckpointFile):
+    """Count all simulations tracked in the checkpoint file."""
+    iTotal = 0
+    with open(sCheckpointFile, "r") as f:
+        for sLine in f:
+            listLine = sLine.strip().split()
+            if len(listLine) > 1 and listLine[1] in ("0", "1", "-1"):
+                iTotal += 1
+    return iTotal
+
+
+def fnRequeueOrphanedSimulations(sCheckpointFile, lockFile):
+    """Reset orphaned in-progress sims (status 0) to -1 for re-dispatch.
+
+    A worker killed mid-simulation leaves its sim stranded at status 0.
+    Called only after the worker pool has joined, so no live worker holds a
+    status-0 entry and this cannot race a running simulation.
+    """
+    with lockFile:
+        listData = []
+        with open(sCheckpointFile, "r") as f:
+            for sLine in f:
+                listData.append(sLine.strip().split())
+
+        for listLine in listData:
+            if len(listLine) > 1 and listLine[1] == "0":
+                listLine[1] = "-1"
+
+        with open(sCheckpointFile, "w") as f:
+            for listLine in listData:
+                f.writelines(" ".join(listLine) + "\n")
+
+
+def fnRunWorkerPool(iCores, tWorkerArgs, bVerbose):
+    """Spawn, start, and join a pool of vplanet worker processes."""
+    workers = [
+        mp.Process(target=par_worker, args=tWorkerArgs)
+        for _ in range(iCores)
+    ]
+    for w in workers:
+        if bVerbose:
+            print("Starting worker")
+        w.start()
+    for w in workers:
+        w.join()
+    return workers
+
+
+def fnRecoverOrphanedSimulations(sCheckpointFile, iCores, tWorkerArgs, bVerbose):
+    """Re-dispatch simulations orphaned by dead workers, up to a bounded limit."""
+    iRetry = 0
+    while (
+        fiCountIncompleteSimulations(sCheckpointFile) > 0
+        and iRetry < iMaxOrphanRetries
+    ):
+        fnRequeueOrphanedSimulations(sCheckpointFile, tWorkerArgs[6])
+        if bVerbose:
+            print(
+                "Re-dispatching orphaned simulations (attempt %d of %d)"
+                % (iRetry + 1, iMaxOrphanRetries)
+            )
+        fnRunWorkerPool(iCores, tWorkerArgs, bVerbose)
+        iRetry += 1
+
+
+def fiReportCompletion(sCheckpointFile, bQuiet):
+    """Report final status; warn loudly and return non-zero if sims incomplete."""
+    iIncomplete = fiCountIncompleteSimulations(sCheckpointFile)
+    iTotal = fiCountTotalSimulations(sCheckpointFile)
+    if iIncomplete > 0:
+        print(
+            "WARNING: %d of %d simulations did not complete (likely killed "
+            "under resource oversubscription); results may be biased and are "
+            "NOT byte-reproducible -- re-run with fewer cores "
+            "(multiplanet -c <N>)." % (iIncomplete, iTotal)
+        )
+        return 1
+    if not bQuiet:
+        print("All %d simulations completed successfully." % iTotal)
+    return 0
+
+
+# --------------------------------------------------------------------
 # ORIGINAL FUNCTIONS (unchanged)
 # --------------------------------------------------------------------
 
@@ -420,7 +522,9 @@ def parallel_run_planet(input_file, cores, quiet, verbose, bigplanet, force):
 
     Returns
     -------
-    None
+    int
+        Exit code: 0 if every simulation completed, 1 if any simulation was
+        left incomplete (e.g. a worker killed under core oversubscription).
     """
     # gets the folder name with all the sims
     folder_name, in_files = GetDir(input_file)
@@ -445,7 +549,6 @@ def parallel_run_planet(input_file, cores, quiet, verbose, bigplanet, force):
         )
 
     lock = mp.Lock()
-    workers = []
 
     master_hdf5_file = os.getcwd() + "/" + folder_name + ".bpa"
 
@@ -456,40 +559,32 @@ def parallel_run_planet(input_file, cores, quiet, verbose, bigplanet, force):
     else:
         vplanet_help = None
 
-    # Spawn worker processes
-    for i in range(cores):
-        workers.append(
-            mp.Process(
-                target=par_worker,
-                args=(
-                    checkpoint_file,
-                    system_name,
-                    body_list,
-                    logfile,
-                    in_files,
-                    verbose,
-                    lock,
-                    bigplanet,
-                    master_hdf5_file,
-                    vplanet_help,  # PASSED as parameter
-                ),
-            )
-        )
+    tWorkerArgs = (
+        checkpoint_file,
+        system_name,
+        body_list,
+        logfile,
+        in_files,
+        verbose,
+        lock,
+        bigplanet,
+        master_hdf5_file,
+        vplanet_help,  # PASSED as parameter
+    )
 
-    # Start all workers
-    for w in workers:
-        if verbose:
-            print("Starting worker")
-        w.start()
-
-    # Wait for all workers to complete
-    for w in workers:
-        w.join()
+    # Run the worker pool, then detect and re-dispatch any simulations
+    # orphaned by workers that died (e.g. OOM-killed under core
+    # oversubscription leaves a sim stranded at checkpoint status 0).
+    fnRunWorkerPool(cores, tWorkerArgs, verbose)
+    fnRecoverOrphanedSimulations(checkpoint_file, cores, tWorkerArgs, verbose)
 
     # Clean up HDF5 file if not using bigplanet
     if bigplanet == False:
         if os.path.isfile(master_hdf5_file) == True:
             sub.run(["rm", master_hdf5_file])
+
+    # Verify every simulation finished; warn + signal failure if not.
+    return fiReportCompletion(checkpoint_file, quiet)
 
 
 def Arguments():
@@ -541,7 +636,7 @@ def Arguments():
     except OSError:
         raise Exception("Unable to call VPLANET. Is it in your PATH?")
 
-    parallel_run_planet(
+    iExitCode = parallel_run_planet(
         args.InputFile,
         args.cores,
         args.quiet,
@@ -549,6 +644,11 @@ def Arguments():
         args.bigplanet,
         args.force,
     )
+
+    # Signal incomplete runs (orphaned/killed sims) with a non-zero exit code
+    # so callers never mistake a partial run for success.
+    if iExitCode:
+        sys.exit(iExitCode)
 
 
 if __name__ == "__main__":
